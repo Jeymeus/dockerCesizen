@@ -21,3 +21,27 @@ export const getAllCategories = async () => {
     const db = await getDB()
     return db.all('SELECT DISTINCT category FROM emotions ORDER BY category')
 }
+
+
+export const insertEmotion = async ({ label, category, emoji }) => {
+    const db = await getDB();
+    const result = await db.run(
+        `INSERT INTO emotions (label, category, emoji) VALUES (?, ?, ?)`,
+        [label, category, emoji]
+    );
+    return db.get(`SELECT * FROM emotions WHERE id = ?`, [result.lastID]);
+};
+
+export const updateEmotionById = async (id, { label, category, emoji }) => {
+    const db = await getDB();
+    await db.run(
+        `UPDATE emotions SET label = ?, category = ?, emoji = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+        [label, category, emoji, id]
+    );
+    return db.get(`SELECT * FROM emotions WHERE id = ?`, [id]);
+};
+
+export const deleteEmotionById = async (id) => {
+    const db = await getDB();
+    return db.run(`DELETE FROM emotions WHERE id = ?`, [id]);
+};
