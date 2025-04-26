@@ -20,3 +20,11 @@ export const authenticate = async (req, res, next) => {
         return res.status(401).json({ error: 'Token invalide' })
     }
 }
+
+export const isAdmin = (req, res, next) => {
+    if (req.user.role !== 'admin') {
+        // TODO Faire une 404 et  une redirection vers la page d'accueil l'utilisateur ne doit pas etre avertit qu'il n'a pas le droit d'accéder à cette page. (ne pas donner trop d'infos)
+        return res.status(404).json({ error: 'Route inexistante' })
+    }
+    next()
+}
