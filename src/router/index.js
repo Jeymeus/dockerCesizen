@@ -4,6 +4,8 @@ import Register from '../views/Register.vue'
 import Dashboard from '../views/Dashboard.vue'
 import Journal from '../views/Journal.vue'
 import Home from '../views/Home.vue'
+import Menu from '../views/Menu.vue'
+import Page from '../views/Page.vue'
 import { useUserStore } from '../stores/userStore'
 
 const routes = [
@@ -21,6 +23,21 @@ const routes = [
         name: 'Journal',
         component: Journal,
         meta: { requiresAuth: true }
+    },
+    {
+        path: '/menu',
+        name: 'MenuGeneral',
+        component: Menu
+    },
+    {
+        path: '/menu/:slug',
+        name: 'MenuDetail',
+        component: Menu
+    },
+    {
+        path: '/page/:id',
+        name: 'PageDetail',
+        component: Page
     }
 ]
 
