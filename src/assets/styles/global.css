@@ -1,0 +1,14 @@
+body {
+    min-height: 100vh;
+    background-image: url('/src/assets/images/cesizen.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/*si je veux changer l'image de fond en fonction de la taille de l'écran*/
+@media (min-width: 768px) {
+    body {
+        background-image: url('/src/assets/images/cesizen.jpg');
+    }
+}

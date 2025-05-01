@@ -6,6 +6,8 @@ import Journal from '../views/Journal.vue'
 import Home from '../views/Home.vue'
 import Menu from '../views/Menu.vue'
 import Page from '../views/Page.vue'
+import Profil from '../views/Profil.vue'
+import Admin from '../views/Admin.vue'
 import { useUserStore } from '../stores/userStore'
 
 const routes = [
@@ -38,7 +40,20 @@ const routes = [
         path: '/page/:id',
         name: 'PageDetail',
         component: Page
+    },
+    {
+        path: '/profil',
+        name: 'Profil',
+        component: Profil,
+        meta: { requiresAuth: true }
+    }, 
+    {
+        path: '/admin',
+        name: 'Admin',
+        component: Admin,
+        meta: { requiresAuth: true, isAdmin: true }
     }
+
 ]
 
 const router = createRouter({
