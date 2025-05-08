@@ -24,7 +24,7 @@
         <router-link class="btn btn-outline-light" to="/journal" title="Journal"><font-awesome-icon icon="book-open" /></router-link>
         <!-- Admin (si admin) -->
         <router-link
-          v-if="isAdmin"
+          v-if="requireAdmin"
           class="btn btn-outline-danger"
           to="/admin"
         >🛡️</router-link>
@@ -52,7 +52,7 @@ const menuStore = useMenuStore()
 const router = useRouter()
 
 const isAuthenticated = computed(() => userStore.isAuthenticated)
-const isAdmin = computed(() => userStore.isAdmin)
+const requireAdmin = computed(() => userStore.requireAdmin)
 const menus = computed(() => menuStore.menus)
 
 

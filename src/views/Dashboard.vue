@@ -15,7 +15,7 @@
                 😊 Explorer les émotions
               </router-link>
               <router-link
-                v-if="isAdmin"
+                v-if="requireAdmin"
                 class="btn btn-outline-danger"
                 to="/admin"
               >
@@ -35,7 +35,7 @@ import { computed } from 'vue'
 
 const store = useUserStore()
 const user = computed(() => store.user)
-const isAdmin = computed(() => store.isAdmin)
+const requireAdmin = computed(() => store.requireAdmin)
 </script>
 
 <style scoped>

@@ -1,7 +1,7 @@
 import { verifyToken } from '../utils/jwt.js'
-import { findUserById } from '../models/userModel.js'
+import { userRepository } from '../repositories/UserRepository.js'
 
-export const authenticate = async (req, res, next) => {
+export const authenticateToken = (req, res, next) => {
     const authHeader = req.headers.authorization
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ error: 'Token manquant' })
@@ -10,7 +10,7 @@ export const authenticate = async (req, res, next) => {
     try {
         const token = authHeader.split(' ')[1]
         const decoded = verifyToken(token)
-        const user = await findUserById(decoded.id)
+        const user = userRepository.findById(decoded.id)
 
         if (!user) return res.status(401).json({ error: 'Utilisateur non trouvé' })
 
@@ -21,9 +21,9 @@ export const authenticate = async (req, res, next) => {
     }
 }
 
-export const isAdmin = (req, res, next) => {
+export const requireAdmin = (req, res, next) => {
     if (req.user.role !== 'admin') {
-        // TODO Faire une 404 et  une redirection vers la page d'accueil l'utilisateur ne doit pas etre avertit qu'il n'a pas le droit d'accéder à cette page. (ne pas donner trop d'infos)
+        // ✅ Bonne pratique : masquer l'existence de la ressource
         return res.status(404).json({ error: 'Route inexistante' })
     }
     next()

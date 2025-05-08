@@ -1,13 +1,13 @@
 import axios from 'axios'
 
 const api = axios.create({
-    baseURL: 'http://localhost:5000/api',
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
     headers: {
         'Content-Type': 'application/json'
     }
 })
 
-// Ajout auto du token si présent
+// 🔐 Ajoute automatiquement le token JWT dans l'en-tête Authorization
 api.interceptors.request.use(config => {
     const token = localStorage.getItem('token')
     if (token) {
@@ -15,5 +15,14 @@ api.interceptors.request.use(config => {
     }
     return config
 })
+
+// 🛠️ Gestion globale des erreurs (optionnelle mais pratique)
+api.interceptors.response.use(
+    res => res,
+    err => {
+        console.error('[API ERROR]', err.response?.data || err.message)
+        return Promise.reject(err)
+    }
+)
 
 export default api

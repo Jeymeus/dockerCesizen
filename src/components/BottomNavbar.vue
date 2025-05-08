@@ -10,7 +10,7 @@
       <i class="bi bi-journal-text"></i><br />Journal
     </router-link>
     <router-link
-      v-if="isAdmin"
+      v-if="requireAdmin"
       to="/admin"
       class="nav-link text-center text-danger"
     >
@@ -24,7 +24,7 @@ import { computed } from 'vue'
 import { useUserStore } from '@/stores/userStore'
 
 const userStore = useUserStore()
-const isAdmin = computed(() => userStore.isAdmin)
+const requireAdmin = computed(() => userStore.requireAdmin)
 
 </script>
 

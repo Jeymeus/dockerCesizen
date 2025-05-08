@@ -10,7 +10,7 @@ export const useMenuStore = defineStore('menu', () => {
             const res = await api.get('/menus')
             menus.value = res.data
         } catch (error) {
-            console.error('Erreur chargement menus:', error)
+            console.error('Erreur chargement menus:', error.response ? error.response.data : error.message)
         }
     }
 

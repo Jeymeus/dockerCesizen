@@ -51,7 +51,7 @@ const routes = [
         path: '/admin',
         name: 'Admin',
         component: Admin,
-        meta: { requiresAuth: true, isAdmin: true }
+        meta: { requiresAuth: true, requireAdmin: true }
     },
     {
         path: '/forgot-password',
@@ -70,14 +70,20 @@ const router = createRouter({
     routes
 })
 
-// 🔐 Guard pour routes protégées
+// 🔐 Guard pour routes protégées et admin
 router.beforeEach((to, from, next) => {
     const userStore = useUserStore()
 
+    // Vérifier si l'utilisateur est authentifié pour les routes protégées
     if (to.meta.requiresAuth && !userStore.isAuthenticated) {
         next('/login')
-    } else {
-        next()
+    }
+    // Vérifier si l'utilisateur est admin pour les routes admin
+    else if (to.meta.requireAdmin && userStore.role !== 'admin') {
+        next('/login') // Ou rediriger vers une page d'erreur, ou une page non autorisée
+    }
+    else {
+        next()  // Si aucune condition n'est violée, on continue
     }
 })
 

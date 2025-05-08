@@ -1,22 +1,20 @@
 import express from 'express'
-import { authenticate, isAdmin } from '../middlewares/authMiddleware.js'
 import {
-    listPages,
-    showPage,
-    addPage,
-    editPage,
-    removePage
+    listVisiblePages,
+    getPageById,
+    createPage,
+    updatePage,
+    deletePage
 } from '../controllers/pageController.js'
+
+import { authenticateToken, requireAdmin } from '../middlewares/authMiddleware.js'
 
 const router = express.Router()
 
-// Public
-router.get('/', listPages)
-router.get('/:id', showPage)
-
-// Admin
-router.post('/', authenticate, isAdmin, addPage)
-router.patch('/:id', authenticate, isAdmin, editPage)
-router.delete('/:id', authenticate, isAdmin, removePage)
+router.get('/', listVisiblePages)
+router.get('/:id', getPageById)
+router.post('/', authenticateToken, requireAdmin, createPage)
+router.put('/:id', authenticateToken, requireAdmin, updatePage)
+router.delete('/:id', authenticateToken, requireAdmin, deletePage)
 
 export default router

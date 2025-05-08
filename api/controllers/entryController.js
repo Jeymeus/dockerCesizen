@@ -1,23 +1,17 @@
-import {
-    insertEntry,
-    updateEntry,
-    deleteEntry,
-    getEntriesByUser,
-    getEntryById,
-    getReportByPeriod
-} from '../models/journalModel.js'
+import { entryRepository } from '../repositories/EntryRepository.js'
 
 // ➡ Ajouter une émotion au journal
 export const addEntry = async (req, res) => {
-    const { emotionId, note, dateEntry } = req.body
+    const { emotion_id, note, date_entry } = req.body
     const userId = req.user.id
 
-    if (!emotionId || !dateEntry) {
+    if (!emotion_id || !date_entry) {
         return res.status(400).json({ error: 'Emotion ID et date d\'entrée requis' })
     }
 
     try {
-        const entry = await insertEntry({ userId, emotionId, note, dateEntry })
+        // Création de l'entrée via le Repository
+        const entry = await entryRepository.create({ user_id: userId, emotion_id, note, date_entry })
         res.status(201).json(entry)
     } catch (error) {
         console.error(error)
@@ -28,17 +22,18 @@ export const addEntry = async (req, res) => {
 // ➡ Modifier une émotion enregistrée
 export const editEntry = async (req, res) => {
     const { id } = req.params
-    const { emotionId, note, dateEntry } = req.body
+    const { emotion_id, note, date_entry } = req.body
     const userId = req.user.id
 
     try {
-        const existing = await getEntryById(id)
+        const existing = await entryRepository.findById(id)
 
         if (!existing || existing.user_id !== userId) {
             return res.status(403).json({ error: 'Accès interdit ou entrée inexistante' })
         }
 
-        const entry = await updateEntry(id, { emotionId, note, dateEntry })
+        // Mise à jour de l'entrée via le Repository
+        const entry = await entryRepository.update(id, { emotion_id, note, date_entry })
         res.json(entry)
     } catch (error) {
         console.error(error)
@@ -52,13 +47,16 @@ export const removeEntry = async (req, res) => {
     const userId = req.user.id
 
     try {
-        const existing = await getEntryById(id)
+        const existing = await entryRepository.findById(id)
 
         if (!existing || existing.user_id !== userId) {
             return res.status(403).json({ error: 'Accès interdit ou entrée inexistante' })
         }
 
-        await deleteEntry(id)
+        // Suppression de l'entrée via le Repository
+        const deleted = await entryRepository.delete(id)
+        if (!deleted) return res.status(404).json({ error: 'Entrée introuvable ou déjà supprimée' })
+
         res.status(204).send()
     } catch (error) {
         console.error(error)
@@ -71,11 +69,30 @@ export const listMyEntries = async (req, res) => {
     const userId = req.user.id
 
     try {
-        const entries = await getEntriesByUser(userId)
+        const entries = await entryRepository.findByUser(userId)
         res.json(entries)
     } catch (error) {
         console.error(error)
         res.status(500).json({ error: 'Erreur lors de la récupération du journal' })
+    }
+}
+
+// ➡ Récupérer une entrée par son ID
+export const getEntryById = async (req, res) => {
+    const { id } = req.params
+    const userId = req.user.id
+
+    try {
+        const entry = await entryRepository.findById(id)
+
+        if (!entry || entry.user_id !== userId) {
+            return res.status(403).json({ error: 'Accès interdit ou entrée introuvable' })
+        }
+
+        res.json(entry)
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ error: 'Erreur lors de la récupération de l\'entrée' })
     }
 }
 
@@ -106,7 +123,8 @@ export const getMyReport = async (req, res) => {
     const end = today.toISOString().split('T')[0]
 
     try {
-        const report = await getReportByPeriod(userId, start, end)
+        // Récupération du rapport par période via le Repository
+        const report = await entryRepository.getReportByPeriod(userId, start, end)
         res.json(report)
     } catch (error) {
         console.error(error)

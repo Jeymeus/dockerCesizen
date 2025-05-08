@@ -66,6 +66,14 @@
         </div>
       </div>
     </div>
+    <EditMenuModal
+      v-if="section === 'menus'"
+      :visible="!!selectedItem"
+      :menu="selectedItem"
+      @close="selectedItem = null"
+      @updated="fetchData"
+    />
+
   </div>
 </template>
 
@@ -73,6 +81,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import AdminSidebar from '../components/AdminSidebar.vue'
+import EditMenuModal from '../components/EditMenuModal.vue'
 import * as AdminAPI from '../services/adminService'
 
 const section = ref('users')
@@ -121,7 +130,7 @@ const descriptors = {
       { key: 'url', label: 'URL' },
       { key: 'visible', label: 'Visible' }
     ],
-    sortable: ['id', 'title'],
+    sortable: ['id', 'title', 'visible'],
     filters: {
       visible: [0, 1]
     },
@@ -130,11 +139,11 @@ const descriptors = {
   emojis: {
     columns: [
       { key: 'id', label: 'ID' },
-      { key: 'label', label: 'Label' },
+      { key: 'label', label: 'Nom' },
       { key: 'category', label: 'Catégorie' },
       { key: 'emoji', label: 'Emoji' }
     ],
-    sortable: ['id', 'label'],
+    sortable: ['id', 'label', 'category'],
     filters: null,
     canAdd: true
   }
@@ -177,17 +186,39 @@ const filteredItems = computed(() => {
     }
   }
 
-  if (sortKey.value) {
-    data = [...data].sort((a, b) => {
-      if (!a[sortKey.value]) return -1
-      return String(a[sortKey.value]).localeCompare(String(b[sortKey.value]))
-    })
-  }
+if (sortKey.value) {
+  const key = sortKey.value
+  data = [...data].sort((a, b) => {
+    const valA = a[key]
+    const valB = b[key]
+
+    if (!valA) return -1
+    if (!valB) return 1
+
+    // tri numérique si possible
+    const numA = parseFloat(valA)
+    const numB = parseFloat(valB)
+
+    const isNumeric = !isNaN(numA) && !isNaN(numB)
+
+    return isNumeric
+      ? numA - numB
+      : String(valA).localeCompare(String(valB))
+  })
+}
+
 
   return data
 })
 
-const editItem = (item) => alert(`Éditer ${section.value} ID ${item.id}`)
+const selectedItem = ref(null)
+const editItem = (item) => {
+  if (section.value === 'menus') {
+    selectedItem.value = item
+  } else {
+    alert(`Édition non implémentée pour ${section.value}`)
+  }
+}
 const deleteItem = (item) => confirm(`Supprimer ${section.value} ID ${item.id} ?`) && alert('Suppression fictive')
 const handleAdd = () => alert(`Ajout d’un(e) ${section.value.slice(0, -1)}`)
 </script>

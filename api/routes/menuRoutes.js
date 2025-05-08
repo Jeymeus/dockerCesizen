@@ -1,15 +1,20 @@
 import express from 'express'
-import { authenticate, isAdmin } from '../middlewares/authMiddleware.js'
-import { listMenus, addMenu, editMenu, removeMenu } from '../controllers/menuController.js'
+import {
+    listMenus,
+    getMenuById,
+    createMenu,
+    updateMenu,
+    deleteMenu
+} from '../controllers/menuController.js'
+
+import { authenticateToken, requireAdmin } from '../middlewares/authMiddleware.js'
 
 const router = express.Router()
 
-// Public
 router.get('/', listMenus)
-
-// Admin
-router.post('/', authenticate, isAdmin, addMenu)
-router.patch('/:id', authenticate, isAdmin, editMenu)
-router.delete('/:id', authenticate, isAdmin, removeMenu)
+router.get('/:id', getMenuById)
+router.post('/', authenticateToken, requireAdmin, createMenu)
+router.put('/:id', authenticateToken, requireAdmin, updateMenu)
+router.delete('/:id', authenticateToken, requireAdmin, deleteMenu)
 
 export default router

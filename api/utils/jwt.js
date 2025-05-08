@@ -1,11 +1,28 @@
 import jwt from 'jsonwebtoken'
 
-const SECRET = 'supersecret' // remplace par une vraie clé en prod
+// À charger depuis .env en prod (via dotenv)
+const SECRET = process.env.JWT_SECRET || 'supersecret'
 
-export const generateToken = (payload) => {
-    return jwt.sign(payload, SECRET, { expiresIn: '7d' })
+/**
+ * Génère un token JWT avec payload personnalisé
+ * @param {Object} payload - Données à encoder
+ * @param {string} expiresIn - Durée de validité (par défaut : 7 jours)
+ * @returns {string} Token signé
+ */
+export const generateToken = (payload, expiresIn = '7d') => {
+    return jwt.sign(payload, SECRET, { expiresIn })
 }
 
+/**
+ * Vérifie et décode un token JWT
+ * @param {string} token - Le token JWT à vérifier
+ * @returns {Object} Payload décodé si valide, sinon lève une erreur
+ */
 export const verifyToken = (token) => {
-    return jwt.verify(token, SECRET)
+    try {
+        return jwt.verify(token, SECRET)
+    } catch (err) {
+        console.error('Erreur de vérification du token JWT:', err)
+        throw new Error('Token invalide ou expiré')
+    }
 }

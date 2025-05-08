@@ -1,23 +1,24 @@
 import express from 'express'
-import { authenticate, isAdmin } from '../middlewares/authMiddleware.js'
-import { updateProfile, changeUserRole, updateUserActiveStatus, removeAccount, listUsers, getUserById } from '../controllers/userController.js'
+import {
+    listUsers,
+    getUserById,
+    updateProfile,
+    changeUserRole,
+    updateUserActiveStatus,
+    getUserProfile,
+    removeAccount
+} from '../controllers/userController.js'
+
+import { authenticateToken, requireAdmin } from '../middlewares/authMiddleware.js'
 
 const router = express.Router()
 
-router.get('/me', authenticate, (req, res) => {
-    res.json(req.user)
-})
-
-router.get('/', authenticate, isAdmin, listUsers)
-
-router.get('/:id', authenticate, isAdmin, getUserById)
-
-router.patch('/me', authenticate, updateProfile)
-
-router.patch('/:id/role', authenticate, isAdmin, changeUserRole)
-
-router.patch('/:id/status', authenticate, isAdmin, updateUserActiveStatus)
-
-router.delete('/:id', authenticate, isAdmin, removeAccount)
+router.get('/me', authenticateToken, getUserProfile)
+router.get('/', authenticateToken, requireAdmin, listUsers)
+router.get('/:id', authenticateToken, requireAdmin, getUserById)
+router.put('/profile', authenticateToken, updateProfile)
+router.patch('/:id/role', authenticateToken, requireAdmin, changeUserRole)
+router.patch('/:id/active', authenticateToken, requireAdmin, updateUserActiveStatus)
+router.delete('/:id', authenticateToken, requireAdmin, removeAccount)
 
 export default router

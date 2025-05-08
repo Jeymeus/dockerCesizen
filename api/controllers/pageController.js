@@ -1,79 +1,74 @@
-import {
-    getVisiblePages,
-    getPageById,
-    createPage,
-    updatePage,
-    deletePage
-} from '../models/pageModel.js'
+import { pageRepository } from '../repositories/PageRepository.js'
 
-// ➔ Lister les pages visibles (optionnel menuId en query)
-export const listPages = async (req, res) => {
-    const { menuId } = req.query
-
+/**
+ * 🔄 GET /pages
+ * Liste toutes les pages visibles (optionnel : filtrer par menu)
+ */
+export const listVisiblePages = (req, res) => {
     try {
-        const pages = await getVisiblePages(menuId)
+        const menuId = req.query.menuId ? parseInt(req.query.menuId) : null
+        const pages = pageRepository.findAllVisible(menuId)
         res.json(pages)
     } catch (error) {
         console.error(error)
-        res.status(500).json({ error: "Erreur lors de la récupération des pages" })
+        res.status(500).json({ error: 'Erreur lors de la récupération des pages' })
     }
 }
 
-// ➔ Voir une page spécifique
-export const showPage = async (req, res) => {
-    const { id } = req.params
-
+/**
+ * 🔄 GET /pages/:id
+ * Récupère une page visible par son ID
+ */
+export const getPageById = (req, res) => {
     try {
-        const page = await getPageById(id)
-        if (!page) return res.status(404).json({ error: "Page non trouvée" })
-
+        const page = pageRepository.findById(req.params.id)
+        if (!page) return res.status(404).json({ error: 'Page non trouvée' })
         res.json(page)
     } catch (error) {
         console.error(error)
-        res.status(500).json({ error: "Erreur lors de la récupération de la page" })
+        res.status(500).json({ error: 'Erreur lors de la récupération de la page' })
     }
 }
 
-// ➔ Créer une page (admin)
-export const addPage = async (req, res) => {
-    const { menuId, title, url, content, visible } = req.body
-
-    if (!menuId || !title || !url) {
-        return res.status(400).json({ error: "Menu ID, titre et URL requis" })
-    }
-
+/**
+ * 🆕 POST /pages
+ * Crée une nouvelle page (admin uniquement)
+ */
+export const createPage = (req, res) => {
     try {
-        const page = await createPage({ menuId, title, url, content, visible: visible ? 1 : 0 })
+        const page = pageRepository.create(req.body)
         res.status(201).json(page)
     } catch (error) {
         console.error(error)
-        res.status(500).json({ error: "Erreur lors de la création de la page" })
+        res.status(400).json({ error: 'Erreur lors de la création de la page' })
     }
 }
 
-// ➔ Modifier une page (admin)
-export const editPage = async (req, res) => {
-    const { id } = req.params
-    const { menuId, title, url, content, visible } = req.body
-
+/**
+ * ✏️ PUT /pages/:id
+ * Met à jour une page (admin uniquement)
+ */
+export const updatePage = (req, res) => {
     try {
-        const page = await updatePage(id, { menuId, title, url, content, visible: visible ? 1 : 0 })
+        const page = pageRepository.update(req.params.id, req.body)
         res.json(page)
     } catch (error) {
         console.error(error)
-        res.status(500).json({ error: "Erreur lors de la mise à jour de la page" })
+        res.status(400).json({ error: 'Erreur lors de la mise à jour de la page' })
     }
 }
 
-// ➔ Supprimer une page (admin)
-export const removePage = async (req, res) => {
-    const { id } = req.params
-
+/**
+ * 🗑️ DELETE /pages/:id
+ * Supprime une page (admin uniquement)
+ */
+export const deletePage = (req, res) => {
     try {
-        await deletePage(id)
+        const deleted = pageRepository.delete(req.params.id)
+        if (!deleted) return res.status(404).json({ error: 'Page introuvable ou déjà supprimée' })
         res.status(204).send()
     } catch (error) {
         console.error(error)
-        res.status(500).json({ error: "Erreur lors de la suppression de la page" })
+        res.status(500).json({ error: 'Erreur lors de la suppression de la page' })
     }
 }

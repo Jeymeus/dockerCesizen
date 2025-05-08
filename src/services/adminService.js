@@ -1,24 +1,44 @@
-import api from './api' // Ton instance axios configurée
+import api from './api.js'
 
-// 🔁 USERS
-export const getUsers = () => api.get('/users')
-export const deleteUser = (id) => api.delete(`/users/${id}`)
-// Ajouter d'autres méthodes si tu fais update/role/activation
+/**
+ * 📦 Récupère toutes les entités dynamiques selon leur type
+ * @param {string} resource - Type d'entité (users, pages, entries, menus, emotions)
+ */
+export const getAll = (resource) => {
+    return api.get(`/${resource}`)
+}
 
-// 📋 MENUS
-export const getMenus = () => api.get('/menus')
-export const createMenu = (data) => api.post('/menus', data)
-export const updateMenu = (id, data) => api.patch(`/menus/${id}`, data)
-export const deleteMenu = (id) => api.delete(`/menus/${id}`)
+/**
+ * 🔍 Récupère une entité par son ID
+ */
+export const getById = (resource, id) => {
+    return api.get(`/${resource}/${id}`)
+}
 
-// 📄 PAGES
-export const getPages = () => api.get('/pages')
-export const createPage = (data) => api.post('/pages', data)
-export const updatePage = (id, data) => api.patch(`/pages/${id}`, data)
-export const deletePage = (id) => api.delete(`/pages/${id}`)
+/**
+ * 🆕 Crée une nouvelle entité
+ */
+export const create = (resource, data) => {
+    return api.post(`/${resource}`, data)
+}
 
-// 😊 EMOJIS
-export const getEmotions = () => api.get('/emotions')
-export const createEmotion = (data) => api.post('/emotions', data)
-export const updateEmotion = (id, data) => api.patch(`/emotions/${id}`, data)
-export const deleteEmotion = (id) => api.delete(`/emotions/${id}`)
+/**
+ * ✏️ Met à jour une entité
+ */
+export const update = (resource, id, data) => {
+    return api.put(`/${resource}/${id}`, data)
+}
+
+/**
+ * 🗑️ Supprime une entité
+ */
+export const remove = (resource, id) => {
+    return api.delete(`/${resource}/${id}`)
+}
+
+/**
+ * 📊 Récupère le rapport émotionnel par période (entries/report/user)
+ */
+export const getEmotionReport = (start, end) => {
+    return api.get(`/entries/report/user`, { params: { start, end } })
+}

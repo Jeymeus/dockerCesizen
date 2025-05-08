@@ -6,15 +6,20 @@ import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+let db = null
+
+// Fonction d'initialisation de la base de données (Singleton)
 export const initDB = async () => {
-  const db = await open({
+  if (db) return db  // Si la base est déjà initialisée, on renvoie l'instance existante
+  db = await open({
     filename: path.join(__dirname, 'cesizen.db'),
     driver: sqlite3.Database
   })
 
-  await db.exec(`PRAGMA foreign_keys = ON;`)
+  // Active les contraintes de clé étrangère
+  await db.exec('PRAGMA foreign_keys = ON;')
 
-  // Recrée toutes les tables
+  // On ne recrée pas les tables, mais on s'assure qu'elles existent
   await db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -69,13 +74,7 @@ export const initDB = async () => {
     );
   `)
 
-  // Utilisateur admin fictif
-  await db.run(`
-    INSERT OR IGNORE INTO users (firstname, lastname, email, password, role)
-    VALUES ('Admin', 'Cesi', 'admin@cesizen.local', 'demo123', 'admin');
-  `)
-
-  // Émotions préconfigurées
+  // Insérer les émotions préconfigurées si elles n'existent pas
   await db.exec(`
     INSERT OR IGNORE INTO emotions (label, category) VALUES
     ('Fierté', 'Joie'),
@@ -121,6 +120,9 @@ export const initDB = async () => {
     ('Dégoût profond', 'Dégoût');
   `)
 
-  console.log('✅ Base de données SQLite initialisée avec émotions')
+  console.log('✅ Base de données SQLite initialisée avec succès')
   return db
 }
+
+// Exporter l'instance DB pour les autres fichiers
+export default db
