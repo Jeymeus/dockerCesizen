@@ -11,7 +11,7 @@ import Admin from '../views/Admin.vue'
 import { useUserStore } from '../stores/userStore'
 
 const routes = [
-    { path: '/', name: 'Home', component : Home },
+    { path: '/', name: 'Home', component: Home },
     { path: '/login', name: 'Login', component: Login },
     { path: '/register', name: 'Register', component: Register },
     {
@@ -46,14 +46,23 @@ const routes = [
         name: 'Profil',
         component: Profil,
         meta: { requiresAuth: true }
-    }, 
+    },
     {
         path: '/admin',
         name: 'Admin',
         component: Admin,
         meta: { requiresAuth: true, isAdmin: true }
+    },
+    {
+        path: '/forgot-password',
+        name: 'ForgotPassword',
+        component: () => import('../views/ForgotPassword.vue')
+    },
+    {
+        path: '/reset-password/:token',
+        name: 'ResetPassword',
+        component: () => import('../views/ResetPassword.vue')
     }
-
 ]
 
 const router = createRouter({

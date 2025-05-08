@@ -50,6 +50,11 @@
               {{ mode === 'login' ? 'Se connecter' : "M'inscrire" }}
             </button>
             <p v-if="error" class="text-danger mt-2 text-center">{{ error }}</p>
+            <p class="text-center mt-3">
+              <router-link to="/forgot-password" class="link-danger text-decoration-underline">
+                Mot de passe oublié ?
+              </router-link>
+            </p>
           </form>
         </div>
       </div>
