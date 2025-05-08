@@ -1,8 +1,11 @@
-import db from '../database/init.js'
+import { initDB, getDB } from '../database/init.js'
 import Entry from '../models/Entry.js'
 
 class EntryRepository {
-  findById(id) {
+  async findById(id) {
+    await initDB()
+    const db = getDB()
+
     const stmt = db.prepare('SELECT * FROM entries WHERE id = ?')
     const row = stmt.get(id)
 
@@ -14,7 +17,10 @@ class EntryRepository {
     }
   }
 
-  findByUser(userId) {
+  async findByUser(userId) {
+    await initDB()
+    const db = getDB()
+
     const stmt = db.prepare(`
       SELECT e.*, emo.label, emo.category, emo.emoji
       FROM entries e
@@ -29,7 +35,6 @@ class EntryRepository {
       .map(row => {
         try {
           const entry = new Entry(row)
-          // Tu peux attacher les infos de l’émotion si besoin :
           entry.emotion = {
             label: row.label,
             category: row.category,
@@ -44,7 +49,10 @@ class EntryRepository {
       .filter(e => e !== null)
   }
 
-  create({ user_id, emotion_id, note, date_entry }) {
+  async create({ user_id, emotion_id, note, date_entry }) {
+    await initDB()
+    const db = getDB()
+
     const stmt = db.prepare(`
       INSERT INTO entries (user_id, emotion_id, note, date_entry)
       VALUES (?, ?, ?, ?)
@@ -54,7 +62,10 @@ class EntryRepository {
     return this.findById(result.lastInsertRowid)
   }
 
-  update(id, { emotion_id, note, date_entry }) {
+  async update(id, { emotion_id, note, date_entry }) {
+    await initDB()
+    const db = getDB()
+
     const stmt = db.prepare(`
       UPDATE entries
       SET emotion_id = ?, note = ?, date_entry = ?, updated_at = CURRENT_TIMESTAMP
@@ -65,13 +76,19 @@ class EntryRepository {
     return this.findById(id)
   }
 
-  delete(id) {
+  async delete(id) {
+    await initDB()
+    const db = getDB()
+
     const stmt = db.prepare('DELETE FROM entries WHERE id = ?')
     const result = stmt.run(id)
     return result.changes > 0
   }
 
-  getReportByPeriod(userId, startDate, endDate) {
+  async getReportByPeriod(userId, startDate, endDate) {
+    await initDB()
+    const db = getDB()
+
     const stmt = db.prepare(`
       SELECT emo.category, emo.label, COUNT(*) as count
       FROM entries e

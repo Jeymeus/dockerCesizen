@@ -1,5 +1,4 @@
-import sqlite3 from 'sqlite3'
-import { open } from 'sqlite'
+import Database from 'better-sqlite3'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -8,19 +7,14 @@ const __dirname = path.dirname(__filename)
 
 let db = null
 
-// Fonction d'initialisation de la base de données (Singleton)
 export const initDB = async () => {
-  if (db) return db  // Si la base est déjà initialisée, on renvoie l'instance existante
-  db = await open({
-    filename: path.join(__dirname, 'cesizen.db'),
-    driver: sqlite3.Database
-  })
+  if (db) return db
 
-  // Active les contraintes de clé étrangère
-  await db.exec('PRAGMA foreign_keys = ON;')
+  db = new Database(path.join(__dirname, 'cesizen.db'))
+  db.pragma('foreign_keys = ON')
 
   // On ne recrée pas les tables, mais on s'assure qu'elles existent
-  await db.exec(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       firstname TEXT NOT NULL,
@@ -75,7 +69,7 @@ export const initDB = async () => {
   `)
 
   // Insérer les émotions préconfigurées si elles n'existent pas
-  await db.exec(`
+  db.exec(`
     INSERT OR IGNORE INTO emotions (label, category) VALUES
     ('Fierté', 'Joie'),
     ('Contentement', 'Joie'),
@@ -124,5 +118,8 @@ export const initDB = async () => {
   return db
 }
 
-// Exporter l'instance DB pour les autres fichiers
-export default db
+// 🆕 Getter dynamique pour récupérer db après initialisation
+export const getDB = () => {
+  if (!db) throw new Error('La base de données n\'a pas été initialisée.')
+  return db
+}

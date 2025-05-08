@@ -2,11 +2,10 @@ import { emotionRepository } from '../repositories/EmotionRepository.js'
 
 /**
  * 🔄 GET /emotions
- * Récupère toutes les émotions
  */
-export const listEmotions = (req, res) => {
+export const listEmotions = async (req, res) => {
     try {
-        const emotions = emotionRepository.findAll()
+        const emotions = await emotionRepository.findAll()
         res.json(emotions)
     } catch (error) {
         console.error(error)
@@ -16,11 +15,10 @@ export const listEmotions = (req, res) => {
 
 /**
  * 🔄 GET /emotions/:id
- * Récupère une émotion par son ID
  */
-export const getEmotionById = (req, res) => {
+export const getEmotionById = async (req, res) => {
     try {
-        const emotion = emotionRepository.findById(req.params.id)
+        const emotion = await emotionRepository.findById(req.params.id)
         if (!emotion) return res.status(404).json({ error: 'Émotion non trouvée' })
         res.json(emotion)
     } catch (error) {
@@ -31,12 +29,11 @@ export const getEmotionById = (req, res) => {
 
 /**
  * 🆕 POST /emotions
- * Crée une nouvelle émotion (admin uniquement)
  */
-export const createEmotion = (req, res) => {
+export const createEmotion = async (req, res) => {
     try {
         const { label, category, emoji } = req.body
-        const emotion = emotionRepository.create({ label, category, emoji })
+        const emotion = await emotionRepository.create({ label, category, emoji })
         res.status(201).json(emotion)
     } catch (error) {
         console.error(error)
@@ -46,12 +43,11 @@ export const createEmotion = (req, res) => {
 
 /**
  * ✏️ PUT /emotions/:id
- * Met à jour une émotion (admin uniquement)
  */
-export const updateEmotion = (req, res) => {
+export const updateEmotion = async (req, res) => {
     try {
         const { label, category, emoji } = req.body
-        const emotion = emotionRepository.update(req.params.id, { label, category, emoji })
+        const emotion = await emotionRepository.update(req.params.id, { label, category, emoji })
         res.json(emotion)
     } catch (error) {
         console.error(error)
@@ -61,11 +57,10 @@ export const updateEmotion = (req, res) => {
 
 /**
  * 🗑️ DELETE /emotions/:id
- * Supprime une émotion (admin uniquement)
  */
-export const deleteEmotion = (req, res) => {
+export const deleteEmotion = async (req, res) => {
     try {
-        const deleted = emotionRepository.delete(req.params.id)
+        const deleted = await emotionRepository.delete(req.params.id)
         if (!deleted) return res.status(404).json({ error: 'Émotion introuvable ou déjà supprimée' })
         res.status(204).send()
     } catch (error) {

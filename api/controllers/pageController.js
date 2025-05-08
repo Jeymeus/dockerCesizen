@@ -2,12 +2,11 @@ import { pageRepository } from '../repositories/PageRepository.js'
 
 /**
  * 🔄 GET /pages
- * Liste toutes les pages visibles (optionnel : filtrer par menu)
  */
-export const listVisiblePages = (req, res) => {
+export const listVisiblePages = async (req, res) => {
     try {
         const menuId = req.query.menuId ? parseInt(req.query.menuId) : null
-        const pages = pageRepository.findAllVisible(menuId)
+        const pages = await pageRepository.findAllVisible(menuId)
         res.json(pages)
     } catch (error) {
         console.error(error)
@@ -17,11 +16,10 @@ export const listVisiblePages = (req, res) => {
 
 /**
  * 🔄 GET /pages/:id
- * Récupère une page visible par son ID
  */
-export const getPageById = (req, res) => {
+export const getPageById = async (req, res) => {
     try {
-        const page = pageRepository.findById(req.params.id)
+        const page = await pageRepository.findById(req.params.id)
         if (!page) return res.status(404).json({ error: 'Page non trouvée' })
         res.json(page)
     } catch (error) {
@@ -32,11 +30,10 @@ export const getPageById = (req, res) => {
 
 /**
  * 🆕 POST /pages
- * Crée une nouvelle page (admin uniquement)
  */
-export const createPage = (req, res) => {
+export const createPage = async (req, res) => {
     try {
-        const page = pageRepository.create(req.body)
+        const page = await pageRepository.create(req.body)
         res.status(201).json(page)
     } catch (error) {
         console.error(error)
@@ -46,11 +43,10 @@ export const createPage = (req, res) => {
 
 /**
  * ✏️ PUT /pages/:id
- * Met à jour une page (admin uniquement)
  */
-export const updatePage = (req, res) => {
+export const updatePage = async (req, res) => {
     try {
-        const page = pageRepository.update(req.params.id, req.body)
+        const page = await pageRepository.update(req.params.id, req.body)
         res.json(page)
     } catch (error) {
         console.error(error)
@@ -60,11 +56,10 @@ export const updatePage = (req, res) => {
 
 /**
  * 🗑️ DELETE /pages/:id
- * Supprime une page (admin uniquement)
  */
-export const deletePage = (req, res) => {
+export const deletePage = async (req, res) => {
     try {
-        const deleted = pageRepository.delete(req.params.id)
+        const deleted = await pageRepository.delete(req.params.id)
         if (!deleted) return res.status(404).json({ error: 'Page introuvable ou déjà supprimée' })
         res.status(204).send()
     } catch (error) {

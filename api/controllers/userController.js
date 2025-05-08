@@ -1,14 +1,13 @@
 import { userRepository } from '../repositories/UserRepository.js'
 import { verifyToken } from '../utils/jwt.js'
 
-
 /**
  * 🔄 GET /users
  * Liste tous les utilisateurs (admin uniquement)
  */
-export const listUsers = (req, res) => {
+export const listUsers = async (req, res) => {
     try {
-        const users = userRepository.findAll()
+        const users = await userRepository.findAll()
         res.json(users)
     } catch (error) {
         console.error(error)
@@ -18,11 +17,10 @@ export const listUsers = (req, res) => {
 
 /**
  * 🔄 GET /users/:id
- * Récupère un utilisateur par son ID
  */
-export const getUserById = (req, res) => {
+export const getUserById = async (req, res) => {
     try {
-        const user = userRepository.findById(req.params.id)
+        const user = await userRepository.findById(req.params.id)
         if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' })
         res.json(user)
     } catch (error) {
@@ -33,9 +31,8 @@ export const getUserById = (req, res) => {
 
 /**
  * ✏️ PUT /users/profile
- * Permet à un utilisateur connecté de modifier son profil
  */
-export const updateProfile = (req, res) => {
+export const updateProfile = async (req, res) => {
     const { firstname, lastname, email } = req.body
     const userId = req.user?.id
 
@@ -44,7 +41,7 @@ export const updateProfile = (req, res) => {
     }
 
     try {
-        const updatedUser = userRepository.update(userId, { firstname, lastname, email })
+        const updatedUser = await userRepository.update(userId, { firstname, lastname, email })
         res.json(updatedUser)
     } catch (error) {
         console.error(error)
@@ -54,9 +51,8 @@ export const updateProfile = (req, res) => {
 
 /**
  * ✏️ PATCH /users/:id/role
- * Permet à un admin de changer le rôle d’un utilisateur
  */
-export const changeUserRole = (req, res) => {
+export const changeUserRole = async (req, res) => {
     const { id } = req.params
     const { role } = req.body
 
@@ -65,7 +61,7 @@ export const changeUserRole = (req, res) => {
     }
 
     try {
-        const updatedUser = userRepository.updateRole(id, role)
+        const updatedUser = await userRepository.updateRole(id, role)
         res.json(updatedUser)
     } catch (error) {
         console.error(error)
@@ -75,9 +71,8 @@ export const changeUserRole = (req, res) => {
 
 /**
  * ✏️ PATCH /users/:id/active
- * Permet à un admin d’activer ou désactiver un compte utilisateur
  */
-export const updateUserActiveStatus = (req, res) => {
+export const updateUserActiveStatus = async (req, res) => {
     const { id } = req.params
     const { active } = req.body
 
@@ -86,7 +81,7 @@ export const updateUserActiveStatus = (req, res) => {
     }
 
     try {
-        const updatedUser = userRepository.setActive(id, active)
+        const updatedUser = await userRepository.setActive(id, active)
         res.json(updatedUser)
     } catch (error) {
         console.error(error)
@@ -96,16 +91,15 @@ export const updateUserActiveStatus = (req, res) => {
 
 /**
  * 🗑️ DELETE /users/:id
- * Supprime un utilisateur (admin uniquement)
  */
-export const removeAccount = (req, res) => {
+export const removeAccount = async (req, res) => {
     try {
-        const user = userRepository.findById(req.params.id)
+        const user = await userRepository.findById(req.params.id)
         if (!user) {
             return res.status(404).json({ error: 'Utilisateur non trouvé' })
         }
 
-        const deleted = userRepository.delete(req.params.id)
+        const deleted = await userRepository.delete(req.params.id)
         if (!deleted) {
             return res.status(500).json({ error: 'Erreur lors de la suppression' })
         }
@@ -117,6 +111,9 @@ export const removeAccount = (req, res) => {
     }
 }
 
+/**
+ * 👤 GET /users/me
+ */
 export const getUserProfile = async (req, res) => {
     const token = req.headers.authorization?.split(' ')[1]
 

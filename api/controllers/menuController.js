@@ -2,11 +2,10 @@ import { menuRepository } from '../repositories/MenuRepository.js'
 
 /**
  * 🔄 GET /menus
- * Récupère tous les menus triés par position
  */
-export const listMenus = (req, res) => {
+export const listMenus = async (req, res) => {
     try {
-        const menus = menuRepository.findAll()
+        const menus = await menuRepository.findAll()
         res.json(menus)
     } catch (error) {
         console.error(error)
@@ -16,11 +15,10 @@ export const listMenus = (req, res) => {
 
 /**
  * 🔄 GET /menus/:id
- * Récupère un menu par son ID
  */
-export const getMenuById = (req, res) => {
+export const getMenuById = async (req, res) => {
     try {
-        const menu = menuRepository.findById(req.params.id)
+        const menu = await menuRepository.findById(req.params.id)
         if (!menu) return res.status(404).json({ error: 'Menu non trouvé' })
         res.json(menu)
     } catch (error) {
@@ -31,11 +29,10 @@ export const getMenuById = (req, res) => {
 
 /**
  * 🆕 POST /menus
- * Crée un nouveau menu (admin uniquement)
  */
-export const createMenu = (req, res) => {
+export const createMenu = async (req, res) => {
     try {
-        const menu = menuRepository.create(req.body)
+        const menu = await menuRepository.create(req.body)
         res.status(201).json(menu)
     } catch (error) {
         console.error(error)
@@ -45,11 +42,10 @@ export const createMenu = (req, res) => {
 
 /**
  * ✏️ PUT /menus/:id
- * Met à jour un menu (admin uniquement)
  */
-export const updateMenu = (req, res) => {
+export const updateMenu = async (req, res) => {
     try {
-        const menu = menuRepository.update(req.params.id, req.body)
+        const menu = await menuRepository.update(req.params.id, req.body)
         res.json(menu)
     } catch (error) {
         console.error(error)
@@ -59,11 +55,10 @@ export const updateMenu = (req, res) => {
 
 /**
  * 🗑️ DELETE /menus/:id
- * Supprime un menu (admin uniquement)
  */
-export const deleteMenu = (req, res) => {
+export const deleteMenu = async (req, res) => {
     try {
-        const deleted = menuRepository.delete(req.params.id)
+        const deleted = await menuRepository.delete(req.params.id)
         if (!deleted) return res.status(404).json({ error: 'Menu introuvable ou déjà supprimé' })
         res.status(204).send()
     } catch (error) {

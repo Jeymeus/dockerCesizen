@@ -1,37 +1,36 @@
-import db from '../database/init.js'
+import { initDB, getDB } from '../database/init.js'
 
 export default class BaseModel {
     constructor(tableName) {
         if (!tableName) throw new Error('BaseModel must have a table name')
         this.tableName = tableName
+        this.db = null
     }
 
-    // Vérifie si db est bien initialisé
-    _checkDbInitialization() {
-        if (!db) {
-            throw new Error('Database not initialized')
-        }
+    async _ready() {
+        await initDB()
+        this.db = getDB()
     }
 
     async findAll() {
-        this._checkDbInitialization()
-        const stmt = db.prepare(`SELECT * FROM ${this.tableName}`)
+        await this._ready()
+        const stmt = this.db.prepare(`SELECT * FROM ${this.tableName}`)
         return stmt.all()
     }
 
     async findById(id) {
-        this._checkDbInitialization()
-        const stmt = db.prepare(`SELECT * FROM ${this.tableName} WHERE id = ?`)
+        await this._ready()
+        const stmt = this.db.prepare(`SELECT * FROM ${this.tableName} WHERE id = ?`)
         return stmt.get(id)
     }
 
     async create(data) {
-        this._checkDbInitialization()
+        await this._ready()
         const keys = Object.keys(data)
         const values = Object.values(data)
         const placeholders = keys.map(() => '?').join(', ')
 
-        const stmt = db.prepare(
+        const stmt = this.db.prepare(
             `INSERT INTO ${this.tableName} (${keys.join(', ')}) VALUES (${placeholders})`
         )
         const result = stmt.run(...values)
@@ -39,11 +38,11 @@ export default class BaseModel {
     }
 
     async update(id, data) {
-        this._checkDbInitialization()
+        await this._ready()
         const keys = Object.keys(data)
         const values = Object.values(data)
         const setters = keys.map(key => `${key} = ?`).join(', ')
-        const stmt = db.prepare(
+        const stmt = this.db.prepare(
             `UPDATE ${this.tableName} SET ${setters}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
         )
         stmt.run(...values, id)
@@ -51,8 +50,8 @@ export default class BaseModel {
     }
 
     async delete(id) {
-        this._checkDbInitialization()
-        const stmt = db.prepare(`DELETE FROM ${this.tableName} WHERE id = ?`)
+        await this._ready()
+        const stmt = this.db.prepare(`DELETE FROM ${this.tableName} WHERE id = ?`)
         const result = stmt.run(id)
         return result.changes > 0
     }

@@ -1,8 +1,11 @@
-import db from '../database/init.js'
+import { initDB, getDB } from '../database/init.js'
 import Page from '../models/Page.js'
 
 class PageRepository {
-    findAllVisible(menuId = null) {
+    async findAllVisible(menuId = null) {
+        await initDB()
+        const db = getDB()
+
         const stmt = menuId
             ? db.prepare('SELECT * FROM pages WHERE visible = 1 AND menu_id = ? ORDER BY id')
             : db.prepare('SELECT * FROM pages WHERE visible = 1 ORDER BY id')
@@ -21,7 +24,10 @@ class PageRepository {
             .filter(p => p !== null)
     }
 
-    findById(id) {
+    async findById(id) {
+        await initDB()
+        const db = getDB()
+
         const stmt = db.prepare('SELECT * FROM pages WHERE id = ?')
         const row = stmt.get(id)
 
@@ -33,11 +39,14 @@ class PageRepository {
         }
     }
 
-    create(data) {
+    async create(data) {
+        await initDB()
+        const db = getDB()
+
         const stmt = db.prepare(`
-      INSERT INTO pages (menu_id, title, url, content, visible)
-      VALUES (?, ?, ?, ?, ?)
-    `)
+            INSERT INTO pages (menu_id, title, url, content, visible)
+            VALUES (?, ?, ?, ?, ?)
+        `)
         const result = stmt.run(
             data.menuId,
             data.title,
@@ -48,12 +57,15 @@ class PageRepository {
         return this.findById(result.lastInsertRowid)
     }
 
-    update(id, data) {
+    async update(id, data) {
+        await initDB()
+        const db = getDB()
+
         const stmt = db.prepare(`
-      UPDATE pages
-      SET menu_id = ?, title = ?, url = ?, content = ?, visible = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `)
+            UPDATE pages
+            SET menu_id = ?, title = ?, url = ?, content = ?, visible = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `)
         stmt.run(
             data.menuId,
             data.title,
@@ -65,7 +77,10 @@ class PageRepository {
         return this.findById(id)
     }
 
-    delete(id) {
+    async delete(id) {
+        await initDB()
+        const db = getDB()
+
         const stmt = db.prepare('DELETE FROM pages WHERE id = ?')
         const result = stmt.run(id)
         return result.changes > 0

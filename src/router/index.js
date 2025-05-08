@@ -71,20 +71,27 @@ const router = createRouter({
 })
 
 // 🔐 Guard pour routes protégées et admin
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
     const userStore = useUserStore()
 
-    // Vérifier si l'utilisateur est authentifié pour les routes protégées
+    // Recharge le user depuis le token s'il n'est pas encore chargé
+    if (!userStore.user && userStore.token) {
+        await userStore.loadUserFromToken()
+    }
+
+    // 🔐 Authentification requise ?
     if (to.meta.requiresAuth && !userStore.isAuthenticated) {
-        next('/login')
+        return next('/login')
     }
-    // Vérifier si l'utilisateur est admin pour les routes admin
-    else if (to.meta.requireAdmin && userStore.role !== 'admin') {
-        next('/login') // Ou rediriger vers une page d'erreur, ou une page non autorisée
+
+    // 👮 Autorisation admin requise ?
+    if (to.meta.requireAdmin && !userStore.requireAdmin) {
+        return next('/login')
     }
-    else {
-        next()  // Si aucune condition n'est violée, on continue
-    }
+
+    // ✅ Sinon, accès autorisé
+    next()
 })
+
 
 export default router

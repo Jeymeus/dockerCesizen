@@ -88,7 +88,7 @@ const handleLogin = async () => {
       email: email.value,
       password: password.value
     })
-    userStore.setUser(res.data)
+    userStore.setUser({ user: res.data.user, token: res.data.token })
     router.push('/dashboard')
   } catch (err) {
     error.value = err.response?.data?.error || 'Échec de la connexion'
@@ -107,7 +107,7 @@ const handleRegister = async () => {
       email: email.value,
       password: password.value
     })
-    userStore.setUser(res.data)
+    userStore.setUser({ user: res.data.user, token: res.data.token })
     router.push('/dashboard')
   } catch (err) {
     error.value = err.response?.data?.error || "Échec de l'inscription"

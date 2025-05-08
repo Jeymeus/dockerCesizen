@@ -5,16 +5,16 @@
 
     <!-- CONTENU PRINCIPAL -->
     <div class="flex-grow-1 p-4 ms-sidebar">
-      <h2 class="mb-4 text-center text-white">Dashboard Admin — {{ sectionLabels[section] }}</h2>
+      <h2 class="mb-4 text-center text-white">
+        Dashboard Admin — {{ sectionLabels[section] }}
+      </h2>
 
-      <!-- TOOLS -->
+      <!-- OUTILS DE TRI/FILTRE -->
       <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div class="d-flex gap-2 flex-wrap">
           <select class="form-select" v-model="sortKey" style="min-width: 120px;">
             <option value="">Trier par</option>
-            <option v-for="col in activeDescriptor.sortable || []" :key="col" :value="col">
-              {{ col }}
-            </option>
+            <option v-for="col in activeDescriptor.sortable || []" :key="col" :value="col">{{ col }}</option>
           </select>
 
           <template v-if="activeDescriptor.filters">
@@ -65,20 +65,21 @@
           </table>
         </div>
       </div>
-    </div>
-    <EditMenuModal
-      v-if="section === 'menus'"
-      :visible="!!selectedItem"
-      :menu="selectedItem"
-      @close="selectedItem = null"
-      @updated="fetchData"
-    />
 
+      <!-- MODAL D'ÉDITION (menus uniquement ici) -->
+      <EditMenuModal
+        v-if="section === 'menus'"
+        :visible="!!selectedItem"
+        :menu="selectedItem"
+        @close="selectedItem = null"
+        @updated="fetchData"
+      />
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import AdminSidebar from '../components/AdminSidebar.vue'
 import EditMenuModal from '../components/EditMenuModal.vue'
@@ -90,12 +91,13 @@ const loading = ref(false)
 const sortKey = ref('')
 const search = ref('')
 const activeFilters = ref({})
+const selectedItem = ref(null)
 
 const sectionLabels = {
   users: 'Utilisateurs',
   menus: 'Menus',
   pages: 'Pages',
-  emojis: 'Émotions'
+  emotions: 'Émotions'
 }
 
 const descriptors = {
@@ -117,10 +119,14 @@ const descriptors = {
   menus: {
     columns: [
       { key: 'id', label: 'ID' },
-      { key: 'title', label: 'Titre' }
+      { key: 'title', label: 'Titre' },
+      { key: 'position', label: 'Position' },
+      { key: 'visible', label: 'Visible' }
     ],
-    sortable: ['id', 'title'],
-    filters: null,
+    sortable: ['id', 'title', 'position'],
+    filters: {
+      visible: [0, 1]
+    },
     canAdd: true
   },
   pages: {
@@ -136,7 +142,7 @@ const descriptors = {
     },
     canAdd: true
   },
-  emojis: {
+  emotions: {
     columns: [
       { key: 'id', label: 'ID' },
       { key: 'label', label: 'Nom' },
@@ -151,18 +157,16 @@ const descriptors = {
 
 const activeDescriptor = computed(() => descriptors[section.value])
 
-const switchSection = async (value) => {
+const switchSection = (value) => {
   section.value = value
-  await fetchData()
+  fetchData()
 }
 
 const fetchData = async () => {
   loading.value = true
   try {
-    if (section.value === 'users') items.value = (await AdminAPI.getUsers()).data
-    else if (section.value === 'menus') items.value = (await AdminAPI.getMenus()).data
-    else if (section.value === 'pages') items.value = (await AdminAPI.getPages()).data
-    else if (section.value === 'emojis') items.value = (await AdminAPI.getEmotions()).data
+    const res = await AdminAPI.getAll(section.value)
+    items.value = res.data
   } catch (err) {
     console.error('Erreur chargement', err)
   } finally {
@@ -170,14 +174,14 @@ const fetchData = async () => {
   }
 }
 
-onMounted(fetchData)
-watch(section, fetchData)
 
 const filteredItems = computed(() => {
   let data = items.value
 
   if (search.value) {
-    data = data.filter(item => JSON.stringify(item).toLowerCase().includes(search.value.toLowerCase()))
+    data = data.filter(item =>
+      JSON.stringify(item).toLowerCase().includes(search.value.toLowerCase())
+    )
   }
 
   for (const key in activeFilters.value) {
@@ -186,32 +190,26 @@ const filteredItems = computed(() => {
     }
   }
 
-if (sortKey.value) {
-  const key = sortKey.value
-  data = [...data].sort((a, b) => {
-    const valA = a[key]
-    const valB = b[key]
+  if (sortKey.value) {
+    const key = sortKey.value
+    data = [...data].sort((a, b) => {
+      const valA = a[key]
+      const valB = b[key]
 
-    if (!valA) return -1
-    if (!valB) return 1
+      const numA = parseFloat(valA)
+      const numB = parseFloat(valB)
 
-    // tri numérique si possible
-    const numA = parseFloat(valA)
-    const numB = parseFloat(valB)
+      const isNumeric = !isNaN(numA) && !isNaN(numB)
 
-    const isNumeric = !isNaN(numA) && !isNaN(numB)
-
-    return isNumeric
-      ? numA - numB
-      : String(valA).localeCompare(String(valB))
-  })
-}
-
+      return isNumeric
+        ? numA - numB
+        : String(valA).localeCompare(String(valB))
+    })
+  }
 
   return data
 })
 
-const selectedItem = ref(null)
 const editItem = (item) => {
   if (section.value === 'menus') {
     selectedItem.value = item
@@ -219,8 +217,28 @@ const editItem = (item) => {
     alert(`Édition non implémentée pour ${section.value}`)
   }
 }
-const deleteItem = (item) => confirm(`Supprimer ${section.value} ID ${item.id} ?`) && alert('Suppression fictive')
-const handleAdd = () => alert(`Ajout d’un(e) ${section.value.slice(0, -1)}`)
+
+const deleteItem = async (item) => {
+  if (confirm(`Supprimer ${section.value} ID ${item.id} ?`)) {
+    try {
+      await AdminAPI.remove(section.value, item.id)
+      fetchData()
+    } catch (e) {
+      console.error('Erreur suppression', e)
+    }
+  }
+}
+
+const handleAdd = () => {
+  if (section.value === 'menus') {
+    selectedItem.value = { title: '', position: 0, visible: 1 }
+  } else {
+    alert(`Ajout non implémenté pour ${section.value}`)
+  }
+}
+
+onMounted(fetchData)
+watch(section, fetchData)
 </script>
 
 <style scoped>

@@ -1,8 +1,11 @@
-import db from '../database/init.js'
+import { initDB, getDB } from '../database/init.js'
 import Emotion from '../models/Emotion.js'
 
 class EmotionRepository {
-    findAll() {
+    async findAll() {
+        await initDB()
+        const db = getDB()
+
         const stmt = db.prepare('SELECT * FROM emotions ORDER BY label')
         const rows = stmt.all()
 
@@ -18,7 +21,10 @@ class EmotionRepository {
             .filter(e => e !== null)
     }
 
-    findById(id) {
+    async findById(id) {
+        await initDB()
+        const db = getDB()
+
         const stmt = db.prepare('SELECT * FROM emotions WHERE id = ?')
         const row = stmt.get(id)
 
@@ -30,26 +36,35 @@ class EmotionRepository {
         }
     }
 
-    create({ label, category, emoji }) {
+    async create({ label, category, emoji }) {
+        await initDB()
+        const db = getDB()
+
         const stmt = db.prepare(`
-      INSERT INTO emotions (label, category, emoji)
-      VALUES (?, ?, ?)
-    `)
+            INSERT INTO emotions (label, category, emoji)
+            VALUES (?, ?, ?)
+        `)
         const result = stmt.run(label, category, emoji)
         return this.findById(result.lastInsertRowid)
     }
 
-    update(id, { label, category, emoji }) {
+    async update(id, { label, category, emoji }) {
+        await initDB()
+        const db = getDB()
+
         const stmt = db.prepare(`
-      UPDATE emotions
-      SET label = ?, category = ?, emoji = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `)
+            UPDATE emotions
+            SET label = ?, category = ?, emoji = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `)
         stmt.run(label, category, emoji, id)
         return this.findById(id)
     }
 
-    delete(id) {
+    async delete(id) {
+        await initDB()
+        const db = getDB()
+
         const stmt = db.prepare('DELETE FROM emotions WHERE id = ?')
         const result = stmt.run(id)
         return result.changes > 0

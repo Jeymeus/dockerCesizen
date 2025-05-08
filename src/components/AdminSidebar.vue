@@ -24,7 +24,7 @@ const sections = [
   { key: 'users', icon: 'user', label: 'Utilisateurs' },
   { key: 'menus', icon: 'bars', label: 'Menus' },
   { key: 'pages', icon: 'file-alt', label: 'Pages' },
-  { key: 'emojis', icon: 'face-smile', label: 'Émotions' }
+  { key: 'emotions', icon: 'face-smile', label: 'Émotions' }
 ]
 </script>
 

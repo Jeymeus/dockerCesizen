@@ -1,12 +1,12 @@
-import db, { initDB } from '../database/init.js'
+import { initDB, getDB } from '../database/init.js'
 import Menu from '../models/Menu.js'
 
 class MenuRepository {
     async findAll() {
-        // Initialisation de la base de données si nécessaire (une seule fois au démarrage)
         await initDB()
+        const db = getDB()
 
-        const stmt = db.prepare('SELECT * FROM menus ORDER BY position')
+        const stmt = db.prepare('SELECT * FROM menus')
         const rows = stmt.all()
 
         return rows
@@ -23,6 +23,7 @@ class MenuRepository {
 
     async findById(id) {
         await initDB()
+        const db = getDB()
 
         const stmt = db.prepare('SELECT * FROM menus WHERE id = ?')
         const row = stmt.get(id)
@@ -37,6 +38,7 @@ class MenuRepository {
 
     async create(data) {
         await initDB()
+        const db = getDB()
 
         const stmt = db.prepare(`
             INSERT INTO menus (title, position, visible)
@@ -48,6 +50,7 @@ class MenuRepository {
 
     async update(id, data) {
         await initDB()
+        const db = getDB()
 
         const stmt = db.prepare(`
             UPDATE menus
@@ -60,6 +63,7 @@ class MenuRepository {
 
     async delete(id) {
         await initDB()
+        const db = getDB()
 
         const stmt = db.prepare('DELETE FROM menus WHERE id = ?')
         const result = stmt.run(id)

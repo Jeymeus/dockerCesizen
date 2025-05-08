@@ -16,12 +16,25 @@ import {
     faFaceSmile,
     faShieldHalved,
     faCircleUser,
-    faBars
+    faBars,
+    faPlus,
+    faFileLines // ✅ ce nom est le nouveau nom de faFileAlt
 } from '@fortawesome/free-solid-svg-icons'
 
-// Ajoute les icônes à la bibliothèque
-library.add(faUser, faRightToBracket, faUserPlus, faBookOpen, faFaceSmile, faShieldHalved, faCircleUser, faBars)
 
+// Ajoute les icônes à la bibliothèque
+library.add(
+    faUser,
+    faRightToBracket,
+    faUserPlus,
+    faBookOpen,
+    faFaceSmile,
+    faShieldHalved,
+    faCircleUser,
+    faBars,
+    faPlus,
+    faFileLines // ✅ ici aussi
+)
 
 
 const app = createApp(App)

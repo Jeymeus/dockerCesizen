@@ -1,23 +1,30 @@
 import bcrypt from 'bcrypt'
 import { userRepository } from '../repositories/UserRepository.js'
 import { generateToken, verifyToken } from '../utils/jwt.js'
-import db from '../database/init.js'
+import { initDB, getDB } from '../database/init.js'
 
 // 🆕 POST /auth/register
 export const register = async (req, res) => {
+    await initDB()
     const { firstname, lastname, email, password } = req.body
 
     if (!firstname || !lastname || !email || !password) {
         return res.status(400).json({ error: 'Tous les champs sont requis' })
     }
 
-    const existing = userRepository.findByEmail(email)
+    const existing = await userRepository.findByEmail(email)
     if (existing) {
         return res.status(409).json({ error: 'Email déjà utilisé' })
     }
 
     const hashed = await bcrypt.hash(password, 10)
-    const user = userRepository.create({ firstname, lastname, email, password: hashed, role: 'user' })
+    const user = await userRepository.create({
+        firstname,
+        lastname,
+        email,
+        password: hashed,
+        role: 'user'
+    })
 
     const token = generateToken({ id: user.id, role: user.role })
     res.status(201).json({ token, user })
@@ -25,9 +32,10 @@ export const register = async (req, res) => {
 
 // 🔑 POST /auth/login
 export const login = async (req, res) => {
+    await initDB()
     const { email, password } = req.body
 
-    const user = userRepository.findByEmail(email)
+    const user = await userRepository.findByEmail(email)
     if (!user) return res.status(401).json({ error: 'Email ou mot de passe invalide' })
 
     const valid = await bcrypt.compare(password, user.password)
@@ -39,6 +47,7 @@ export const login = async (req, res) => {
 
 // ✏️ PATCH /auth/reset-password
 export const resetPassword = async (req, res) => {
+    await initDB()
     const { oldPassword, newPassword } = req.body
     const userId = req.user.id
 
@@ -47,7 +56,7 @@ export const resetPassword = async (req, res) => {
     }
 
     try {
-        const user = userRepository.findById(userId)
+        const user = await userRepository.findById(userId)
 
         const valid = await bcrypt.compare(oldPassword, user.password)
         if (!valid) {
@@ -55,6 +64,7 @@ export const resetPassword = async (req, res) => {
         }
 
         const hashedNew = await bcrypt.hash(newPassword, 10)
+        const db = getDB()
         db.prepare('UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
             .run(hashedNew, userId)
 
@@ -66,17 +76,18 @@ export const resetPassword = async (req, res) => {
 }
 
 // 📧 POST /auth/forgot-password
-export const forgotPassword = (req, res) => {
+export const forgotPassword = async (req, res) => {
+    await initDB()
     const { email } = req.body
 
     if (!email) return res.status(400).json({ error: 'Email requis' })
 
     try {
-        const user = userRepository.findByEmail(email)
+        const user = await userRepository.findByEmail(email)
         if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' })
 
         const token = generateToken({ id: user.id }, '15m')
-        const resetLink = `/reset-password/${token}` // Simule un lien de mail
+        const resetLink = `/reset-password/${token}`
 
         res.json({ message: 'Lien généré', resetLink })
     } catch (err) {
@@ -87,6 +98,7 @@ export const forgotPassword = (req, res) => {
 
 // 🔁 POST /auth/reset-password/:token
 export const publicResetPassword = async (req, res) => {
+    await initDB()
     const { token } = req.params
     const { newPassword } = req.body
 
@@ -94,10 +106,11 @@ export const publicResetPassword = async (req, res) => {
 
     try {
         const decoded = verifyToken(token)
-        const user = userRepository.findById(decoded.id)
+        const user = await userRepository.findById(decoded.id)
         if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' })
 
         const hashed = await bcrypt.hash(newPassword, 10)
+        const db = getDB()
         db.prepare('UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
             .run(hashed, user.id)
 
