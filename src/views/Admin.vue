@@ -11,10 +11,13 @@
 
       <!-- OUTILS DE TRI/FILTRE -->
       <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <div class="d-flex gap-2 flex-wrap">
+        <div class="d-flex gap-2">
           <select class="form-select" v-model="sortKey" style="min-width: 120px;">
             <option value="">Trier par</option>
-            <option v-for="col in activeDescriptor.sortable || []" :key="col" :value="col">{{ col }}</option>
+            <option v-for="key in activeDescriptor.sortable" :key="key" :value="key">
+              {{ getColumnLabel(key) }}
+            </option>
+
           </select>
 
           <template v-if="activeDescriptor.filters">
@@ -42,16 +45,17 @@
       <div class="card shadow">
         <div class="card-body table-responsive p-0">
           <table class="table table-hover table-striped mb-0">
-            <thead class="table-light">
+            <thead class="table-light text-center">
               <tr>
                 <th v-for="col in activeDescriptor.columns" :key="col.key">{{ col.label }}</th>
-                <th>Actions</th>
+                <th style="width: 152px;">Actions</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="item in filteredItems" :key="item.id">
-                <td v-for="col in activeDescriptor.columns" :key="col.key">{{ item[col.key] }}</td>
-                <td>
+                <td class="text-center" v-for="col in activeDescriptor.columns" :key="col.key">{{ item[col.key] }}</td>
+                <td class="text-center">
+                  <button class="btn btn-sm btn-info me-2" @click="showItem">👁️</button>
                   <button class="btn btn-sm btn-warning me-2" @click="editItem(item)">✏️</button>
                   <button class="btn btn-sm btn-danger" @click="deleteItem(item)">🗑</button>
                 </td>
@@ -104,13 +108,12 @@ const descriptors = {
   users: {
     columns: [
       { key: 'id', label: 'ID' },
-      { key: 'firstname', label: 'Prénom' },
-      { key: 'lastname', label: 'Nom' },
+      { key: 'fullname', label: 'Nom complet' },
       { key: 'email', label: 'Email' },
       { key: 'role', label: 'Rôle' },
       { key: 'active', label: 'Actif' }
     ],
-    sortable: ['id', 'firstname', 'email', 'role'],
+    sortable: ['id', 'email', 'role'],
     filters: {
       role: ['user', 'admin']
     },
@@ -120,21 +123,16 @@ const descriptors = {
     columns: [
       { key: 'id', label: 'ID' },
       { key: 'title', label: 'Titre' },
-      { key: 'position', label: 'Position' },
-      { key: 'visible', label: 'Visible' }
     ],
-    sortable: ['id', 'title', 'position'],
-    filters: {
-      visible: [0, 1]
-    },
+    sortable: ['id', 'title'],
     canAdd: true
   },
   pages: {
     columns: [
       { key: 'id', label: 'ID' },
       { key: 'title', label: 'Titre' },
-      { key: 'url', label: 'URL' },
-      { key: 'visible', label: 'Visible' }
+      { key: 'visible', label: 'Visible' },
+      { key: 'menu_title', label: 'Menu' }
     ],
     sortable: ['id', 'title', 'visible'],
     filters: {
@@ -145,12 +143,11 @@ const descriptors = {
   emotions: {
     columns: [
       { key: 'id', label: 'ID' },
+      { key: 'emoji', label: 'Emoji' },
       { key: 'label', label: 'Nom' },
       { key: 'category', label: 'Catégorie' },
-      { key: 'emoji', label: 'Emoji' }
     ],
     sortable: ['id', 'label', 'category'],
-    filters: null,
     canAdd: true
   }
 }
@@ -162,11 +159,41 @@ const switchSection = (value) => {
   fetchData()
 }
 
+const enrichItems = async (raw, currentSection) => {
+
+  const section = typeof currentSection === 'string' ? currentSection : currentSection.value
+
+  if (section === 'users') {
+    return raw.map(u => ({ ...u, fullname: `${u.firstname} ${u.lastname}` }))
+  }
+
+  if (section === 'pages') {
+    const menus = (await AdminAPI.getAll('menus')).data
+    const menuMap = Object.fromEntries(menus.map(m => [m.id, m.title]))
+    return raw.map(p => ({
+      ...p,
+      menu_title: menuMap[p.menu_id] || 'Non assigné'
+    }))
+  }
+  return raw
+}
+
+const getColumnLabel = (key) => {
+  const col = activeDescriptor.value.columns.find(c => c.key === key)
+  return col ? col.label : key
+}
+
 const fetchData = async () => {
   loading.value = true
   try {
     const res = await AdminAPI.getAll(section.value)
-    items.value = res.data
+    items.value = await enrichItems(res.data, section.value)
+    activeFilters.value = {}
+    if (activeDescriptor.value.filters) {
+      for (const key in activeDescriptor.value.filters) {
+        activeFilters.value[key] = '' // 🔁 valeur par défaut = "Tous"
+      }
+    }
   } catch (err) {
     console.error('Erreur chargement', err)
   } finally {
@@ -203,12 +230,17 @@ const filteredItems = computed(() => {
 
       return isNumeric
         ? numA - numB
-        : String(valA).localeCompare(String(valB))
+        : String(valA).localeCompare(String(valB), 'fr', { sensitivity: 'base' })
     })
   }
 
   return data
 })
+
+const showItem = (item) => {
+  alert(`Affichage de la ressource ${section.value} ID ${item.id}`)
+  // ou router.push(`/detail/${section.value}/${item.id}`) si tu as une vue dédiée
+}
 
 const editItem = (item) => {
   if (section.value === 'menus') {
