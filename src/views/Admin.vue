@@ -1,9 +1,7 @@
 <template>
   <div class="d-flex min-vh-100">
-    <!-- SIDEBAR -->
     <AdminSidebar :activeSection="section" @changeSection="switchSection" />
 
-    <!-- CONTENU PRINCIPAL -->
     <div class="flex-grow-1 p-4 ms-sidebar">
       <h2 class="mb-4 text-center text-white">
         Dashboard Admin — {{ sectionLabels[section] }}
@@ -17,18 +15,12 @@
             <option v-for="key in activeDescriptor.sortable" :key="key" :value="key">
               {{ getColumnLabel(key) }}
             </option>
-
           </select>
 
           <template v-if="activeDescriptor.filters">
-            <select
-              v-for="(options, filterKey) in activeDescriptor.filters"
-              :key="filterKey"
-              class="form-select"
-              v-model="activeFilters[filterKey]"
-              style="min-width: 120px;"
-            >
-              <option :value="''">Tous {{ filterKey }}</option>
+            <select v-for="(options, filterKey) in activeDescriptor.filters" :key="filterKey" class="form-select"
+              v-model="activeFilters[filterKey]" style="min-width: 120px;">
+              <option value="">Filtrer par</option>
               <option v-for="opt in options" :key="opt" :value="opt">{{ opt }}</option>
             </select>
           </template>
@@ -48,16 +40,14 @@
             <thead class="table-light text-center">
               <tr>
                 <th v-for="col in activeDescriptor.columns" :key="col.key">{{ col.label }}</th>
-                <th style="width: 152px;">Actions</th>
+                <th style="width: 152px;">Afficher</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="item in filteredItems" :key="item.id">
                 <td class="text-center" v-for="col in activeDescriptor.columns" :key="col.key">{{ item[col.key] }}</td>
                 <td class="text-center">
-                  <button class="btn btn-sm btn-info me-2" @click="showItem">👁️</button>
-                  <button class="btn btn-sm btn-warning me-2" @click="editItem(item)">✏️</button>
-                  <button class="btn btn-sm btn-danger" @click="deleteItem(item)">🗑</button>
+                  <button class="btn btn-sm btn-info me-2" @click="showItem(item)">👁️</button>
                 </td>
               </tr>
               <tr v-if="filteredItems.length === 0">
@@ -70,14 +60,8 @@
         </div>
       </div>
 
-      <!-- MODAL D'ÉDITION (menus uniquement ici) -->
-      <EditMenuModal
-        v-if="section === 'menus'"
-        :visible="!!selectedItem"
-        :menu="selectedItem"
-        @close="selectedItem = null"
-        @updated="fetchData"
-      />
+      <ResourceModal :item="selectedItemData" :descriptor="fullDescriptors[section]" :visible="showModal"
+        :section="section" :loading="loadingItem" @close="closeModal" @edit="editItem" @delete="deleteItem" />
     </div>
   </div>
 </template>
@@ -86,16 +70,27 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import AdminSidebar from '../components/AdminSidebar.vue'
-import EditMenuModal from '../components/EditMenuModal.vue'
+import ResourceModal from '../components/ResourceModal.vue'
 import * as AdminAPI from '../services/adminService'
+import { useRouter, useRoute } from 'vue-router'
 
-const section = ref('users')
+const router = useRouter()
+const route = useRoute()
+const section = ref(route.query.section || 'users')
 const items = ref([])
 const loading = ref(false)
 const sortKey = ref('')
 const search = ref('')
 const activeFilters = ref({})
-const selectedItem = ref(null)
+const selectedItemId = ref(null)
+const selectedItemData = ref(null)
+const loadingItem = ref(false)
+const showModal = ref(false)
+
+watch(() => route.query.section, (val) => {
+  if (val) section.value = val
+})
+
 
 const sectionLabels = {
   users: 'Utilisateurs',
@@ -135,9 +130,6 @@ const descriptors = {
       { key: 'menu_title', label: 'Menu' }
     ],
     sortable: ['id', 'title', 'visible'],
-    filters: {
-      visible: [0, 1]
-    },
     canAdd: true
   },
   emotions: {
@@ -148,6 +140,9 @@ const descriptors = {
       { key: 'category', label: 'Catégorie' },
     ],
     sortable: ['id', 'label', 'category'],
+    filters: {
+      category: ['Joie', 'Tristesse', 'Colère', 'Surprise', 'Dégoût']
+    },
     canAdd: true
   }
 }
@@ -160,7 +155,6 @@ const switchSection = (value) => {
 }
 
 const enrichItems = async (raw, currentSection) => {
-
   const section = typeof currentSection === 'string' ? currentSection : currentSection.value
 
   if (section === 'users') {
@@ -175,6 +169,7 @@ const enrichItems = async (raw, currentSection) => {
       menu_title: menuMap[p.menu_id] || 'Non assigné'
     }))
   }
+
   return raw
 }
 
@@ -191,7 +186,7 @@ const fetchData = async () => {
     activeFilters.value = {}
     if (activeDescriptor.value.filters) {
       for (const key in activeDescriptor.value.filters) {
-        activeFilters.value[key] = '' // 🔁 valeur par défaut = "Tous"
+        activeFilters.value[key] = ''
       }
     }
   } catch (err) {
@@ -200,7 +195,6 @@ const fetchData = async () => {
     loading.value = false
   }
 }
-
 
 const filteredItems = computed(() => {
   let data = items.value
@@ -222,12 +216,9 @@ const filteredItems = computed(() => {
     data = [...data].sort((a, b) => {
       const valA = a[key]
       const valB = b[key]
-
       const numA = parseFloat(valA)
       const numB = parseFloat(valB)
-
       const isNumeric = !isNaN(numA) && !isNaN(numB)
-
       return isNumeric
         ? numA - numB
         : String(valA).localeCompare(String(valB), 'fr', { sensitivity: 'base' })
@@ -237,17 +228,90 @@ const filteredItems = computed(() => {
   return data
 })
 
-const showItem = (item) => {
-  alert(`Affichage de la ressource ${section.value} ID ${item.id}`)
-  // ou router.push(`/detail/${section.value}/${item.id}`) si tu as une vue dédiée
+
+const fullDescriptors = {
+  users: {
+    columns: [
+      { key: 'id', label: 'ID' },
+      { key: 'firstname', label: 'Prénom' },
+      { key: 'lastname', label: 'Nom' },
+      { key: 'email', label: 'Email' },
+      { key: 'role', label: 'Rôle' },
+      { key: 'active', label: 'Actif' },
+      { key: 'created_at', label: 'Créé le' },
+      { key: 'updated_at', label: 'Modifié le' }
+    ]
+  },
+  menus: {
+    columns: [
+      { key: 'id', label: 'ID' },
+      { key: 'title', label: 'Titre' }
+    ]
+  },
+  pages: {
+    columns: [
+      { key: 'id', label: 'ID' },
+      { key: 'title', label: 'Titre' },
+      { key: 'url', label: 'URL' },
+      { key: 'content', label: 'Contenu' },
+      { key: 'visible', label: 'Visible' },
+      { key: 'count_view', label: 'Nombre de vues' },
+      { key: 'menu_title', label: 'Menu' },
+      { key: 'created_at', label: 'Créée le' },
+      { key: 'updated_at', label: 'Modifiée le' }
+    ]
+  },
+  emotions: {
+    columns: [
+      { key: 'id', label: 'ID' },
+      { key: 'emoji', label: 'Emoji' },
+      { key: 'label', label: 'Nom' },
+      { key: 'category', label: 'Catégorie' },
+      { key: 'created_at', label: 'Créée le' },
+      { key: 'updated_at', label: 'Modifiée le' }
+    ]
+  }
+}
+
+
+const showItem = async (item) => {
+  selectedItemId.value = item.id
+  loadingItem.value = true
+  showModal.value = true
+
+  try {
+    const res = await AdminAPI.getById(section.value, item.id)
+    let data = res.data
+
+    if (section.value === 'pages') {
+      const menus = (await AdminAPI.getAll('menus')).data
+      const menu = menus.find(m => m.id === data.menu_id)
+      data.menu_title = menu ? menu.title : 'Non assigné'
+    }
+
+    if (section.value === 'users') {
+      data.fullname = `${data.firstname} ${data.lastname}`
+    }
+
+    selectedItemData.value = data
+  } catch (err) {
+    console.error('Erreur chargement détail :', err)
+    selectedItemData.value = null
+  } finally {
+    loadingItem.value = false
+  }
+}
+
+
+const closeModal = () => {
+  showModal.value = false
+  selectedItemId.value = null
+  selectedItemData.value = null
+  loadingItem.value = false
 }
 
 const editItem = (item) => {
-  if (section.value === 'menus') {
-    selectedItem.value = item
-  } else {
-    alert(`Édition non implémentée pour ${section.value}`)
-  }
+  router.push(`/admin/${section.value}/${item.id}/edit`)
 }
 
 const deleteItem = async (item) => {
@@ -262,11 +326,7 @@ const deleteItem = async (item) => {
 }
 
 const handleAdd = () => {
-  if (section.value === 'menus') {
-    selectedItem.value = { title: '', position: 0, visible: 1 }
-  } else {
-    alert(`Ajout non implémenté pour ${section.value}`)
-  }
+  alert(`Ajout non implémenté pour ${section.value}`)
 }
 
 onMounted(fetchData)

@@ -1,4 +1,5 @@
 import { menuRepository } from '../repositories/MenuRepository.js'
+import { sanitizeMenuPayload } from '../utils/sanitize.js'
 
 /**
  * 🔄 GET /menus
@@ -32,7 +33,8 @@ export const getMenuById = async (req, res) => {
  */
 export const createMenu = async (req, res) => {
     try {
-        const menu = await menuRepository.create(req.body)
+        const clean = sanitizeMenuPayload(req.body)
+        const menu = await menuRepository.create(clean)
         res.status(201).json(menu)
     } catch (error) {
         console.error(error)
@@ -45,7 +47,8 @@ export const createMenu = async (req, res) => {
  */
 export const updateMenu = async (req, res) => {
     try {
-        const menu = await menuRepository.update(req.params.id, req.body)
+        const clean = sanitizeMenuPayload(req.body)
+        const menu = await menuRepository.update(req.params.id, clean)
         res.json(menu)
     } catch (error) {
         console.error(error)

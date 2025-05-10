@@ -3,6 +3,7 @@ import {
     listUsers,
     getUserById,
     updateProfile,
+    updateUser,
     changeUserRole,
     updateUserActiveStatus,
     getUserProfile,
@@ -17,6 +18,8 @@ router.get('/me', authenticateToken, getUserProfile)
 router.get('/', authenticateToken, requireAdmin, listUsers)
 router.get('/:id', authenticateToken, requireAdmin, getUserById)
 router.put('/profile', authenticateToken, updateProfile)
+router.put('/:id', authenticateToken, requireAdmin, updateUser)
+
 router.patch('/:id/role', authenticateToken, requireAdmin, changeUserRole)
 router.patch('/:id/active', authenticateToken, requireAdmin, updateUserActiveStatus)
 router.delete('/:id', authenticateToken, requireAdmin, removeAccount)

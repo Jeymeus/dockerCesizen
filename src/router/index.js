@@ -62,6 +62,12 @@ const routes = [
         path: '/reset-password/:token',
         name: 'ResetPassword',
         component: () => import('../views/ResetPassword.vue')
+    },
+    ,
+    {
+        path: '/admin/:section/:id/edit',
+        name: 'AdminEdit',
+        component: () => import('../views/AdminEdit.vue')
     }
 ]
 

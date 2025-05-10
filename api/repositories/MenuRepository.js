@@ -41,10 +41,10 @@ class MenuRepository {
         const db = getDB()
 
         const stmt = db.prepare(`
-            INSERT INTO menus (title, position, visible)
-            VALUES (?, ?, ?)
+            INSERT INTO menus (title)
+            VALUES (?)
         `)
-        const result = stmt.run(data.title, data.position, data.visible)
+        const result = stmt.run(data.title)
         return this.findById(result.lastInsertRowid)
     }
 
@@ -54,10 +54,10 @@ class MenuRepository {
 
         const stmt = db.prepare(`
             UPDATE menus
-            SET title = ?, position = ?, visible = ?, updated_at = CURRENT_TIMESTAMP
+            SET title = ?
             WHERE id = ?
         `)
-        stmt.run(data.title, data.position, data.visible, id)
+        stmt.run(data.title, id)
         return this.findById(id)
     }
 

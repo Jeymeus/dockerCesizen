@@ -10,5 +10,6 @@ body {
 @media (min-width: 768px) {
     body {
         background-image: url('/src/assets/images/cesizen.jpg');
+        overflow: hidden;
     }
 }

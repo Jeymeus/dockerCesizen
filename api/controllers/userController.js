@@ -1,5 +1,6 @@
 import { userRepository } from '../repositories/UserRepository.js'
 import { verifyToken } from '../utils/jwt.js'
+import { sanitizeUserPayload } from '../utils/sanitize.js'
 
 /**
  * 🔄 GET /users
@@ -31,6 +32,7 @@ export const getUserById = async (req, res) => {
 
 /**
  * ✏️ PUT /users/profile
+ * Met à jour le profil de l'utilisateur connecté
  */
 export const updateProfile = async (req, res) => {
     const { firstname, lastname, email } = req.body
@@ -46,6 +48,21 @@ export const updateProfile = async (req, res) => {
     } catch (error) {
         console.error(error)
         res.status(500).json({ error: 'Erreur lors de la mise à jour du profil' })
+    }
+}
+
+/**
+ * ✏️ PUT /users/:id
+ * Met à jour un utilisateur (admin uniquement)
+ */
+export const updateUser = async (req, res) => {
+    try {
+        const clean = sanitizeUserPayload(req.body)
+        const updated = await userRepository.update(req.params.id, clean)
+        res.json(updated)
+    } catch (err) {
+        console.error(err)
+        res.status(400).json({ error: 'Erreur lors de la mise à jour de l’utilisateur' })
     }
 }
 

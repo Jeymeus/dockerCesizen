@@ -9,6 +9,7 @@ import './assets/styles/global.css'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import {
+    faArrowLeft, faFloppyDisk, faXmark,
     faUser,
     faRightToBracket,
     faUserPlus,
@@ -24,6 +25,7 @@ import {
 
 // Ajoute les icônes à la bibliothèque
 library.add(
+    faArrowLeft, faFloppyDisk, faXmark,
     faUser,
     faRightToBracket,
     faUserPlus,
