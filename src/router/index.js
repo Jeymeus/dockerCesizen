@@ -48,12 +48,6 @@ const routes = [
         meta: { requiresAuth: true }
     },
     {
-        path: '/admin',
-        name: 'Admin',
-        component: Admin,
-        meta: { requiresAuth: true, requireAdmin: true }
-    },
-    {
         path: '/forgot-password',
         name: 'ForgotPassword',
         component: () => import('../views/ForgotPassword.vue')
@@ -63,7 +57,17 @@ const routes = [
         name: 'ResetPassword',
         component: () => import('../views/ResetPassword.vue')
     },
-    ,
+    {
+        path: '/admin',
+        name: 'Admin',
+        component: Admin,
+        meta: { requiresAuth: true, requireAdmin: true }
+    },
+    {
+        path: '/admin/:section/new',
+        name: 'AdminAdd',
+        component: () => import('../views/AdminAdd.vue')
+    },      
     {
         path: '/admin/:section/:id/edit',
         name: 'AdminEdit',

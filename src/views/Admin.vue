@@ -326,7 +326,7 @@ const deleteItem = async (item) => {
 }
 
 const handleAdd = () => {
-  alert(`Ajout non implémenté pour ${section.value}`)
+  router.push(`/admin/${section.value}/new`)
 }
 
 onMounted(fetchData)
