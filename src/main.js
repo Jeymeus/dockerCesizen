@@ -5,6 +5,9 @@ import { createPinia } from 'pinia'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import './assets/styles/global.css'
+import VCalendar from 'v-calendar'
+import 'v-calendar/style.css'
+
 
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -42,6 +45,7 @@ library.add(
 const app = createApp(App)
 app.use(createPinia())
 app.component('font-awesome-icon', FontAwesomeIcon)
+app.use(VCalendar, {})
 app.use(router)
 app.mount('#app')
 
