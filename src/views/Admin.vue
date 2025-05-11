@@ -318,12 +318,16 @@ const deleteItem = async (item) => {
   if (confirm(`Supprimer ${section.value} ID ${item.id} ?`)) {
     try {
       await AdminAPI.remove(section.value, item.id)
-      fetchData()
+      alert('✅ Élément supprimé avec succès.')
+      closeModal() // <--- assure-toi que tu fermes bien la modale ici
+      fetchData()  // pour rafraîchir la liste
     } catch (e) {
       console.error('Erreur suppression', e)
+      alert('❌ Erreur lors de la suppression.')
     }
   }
 }
+
 
 const handleAdd = () => {
   router.push(`/admin/${section.value}/new`)
