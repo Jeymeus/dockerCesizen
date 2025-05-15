@@ -46,15 +46,19 @@ export const createMenu = async (req, res) => {
  * ✏️ PUT /menus/:id
  */
 export const updateMenu = async (req, res) => {
+
+    const id = parseInt(req.params.id)
+    const data = req.body
+
     try {
-        const clean = sanitizeMenuPayload(req.body)
-        const menu = await menuRepository.update(req.params.id, clean)
-        res.json(menu)
-    } catch (error) {
-        console.error(error)
-        res.status(400).json({ error: 'Erreur lors de la mise à jour du menu' })
+        const updated = await menuRepository.update(id, data)
+        res.json(updated)
+    } catch (e) {
+        console.error('Erreur update menu:', e.message)
+        res.status(500).json({ error: 'Erreur interne' })
     }
 }
+  
 
 /**
  * 🗑️ DELETE /menus/:id

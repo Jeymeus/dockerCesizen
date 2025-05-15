@@ -14,5 +14,6 @@ export default class Menu extends BaseModel {
 
         this.id = Number(data.id)
         this.title = String(data.title)
+        this.type = data.type ? String(data.type) : 'articles'
     }
 }

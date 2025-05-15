@@ -41,23 +41,25 @@ class MenuRepository {
         const db = getDB()
 
         const stmt = db.prepare(`
-            INSERT INTO menus (title)
-            VALUES (?)
+            INSERT INTO menus (title, type)
+            VALUES (?, ?)
         `)
-        const result = stmt.run(data.title)
+        const result = stmt.run(data.title, data.type || 'articles')
         return this.findById(result.lastInsertRowid)
     }
+    
 
     async update(id, data) {
         await initDB()
         const db = getDB()
 
         const stmt = db.prepare(`
-            UPDATE menus
-            SET title = ?
-            WHERE id = ?
+          UPDATE menus
+          SET title = ?, type = ?
+          WHERE id = ?
         `)
-        stmt.run(data.title, id)
+        stmt.run(data.title, data.type, id)
+
         return this.findById(id)
     }
 

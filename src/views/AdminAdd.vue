@@ -95,7 +95,10 @@ const validEmotionCategories = ['Joie', 'Colère', 'Peur', 'Tristesse', 'Surpris
 
 const fullDescriptors = {
     menus: {
-        columns: [{ key: 'title', label: 'Titre' }]
+        columns: [
+            { key: 'title', label: 'Titre' },
+            { key: 'type', label: 'Type' }
+        ]
     },
     pages: {
         columns: [

@@ -118,6 +118,7 @@ const descriptors = {
     columns: [
       { key: 'id', label: 'ID' },
       { key: 'title', label: 'Titre' },
+      { key: 'type', label: 'Type' }
     ],
     sortable: ['id', 'title'],
     canAdd: true
