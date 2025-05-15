@@ -7,10 +7,16 @@
         <h1 class="rainbow-title m-0">{{ page.title }}</h1>
       </div>
 
-      <!-- Carte contenu -->
+      <!-- Contenu principal -->
       <div class="card page-card">
         <div class="card-body">
           <p class="card-text text-start" v-html="page.content"></p>
+
+          <!-- Lien cliquable via icône -->
+          <p v-if="page.url" class="mt-4 text-start">
+            Le lien ici :
+            <a :href="page.url" target="_blank" rel="noopener" class="page-icon-link">🔗</a>
+          </p>
         </div>
       </div>
     </div>
@@ -20,7 +26,6 @@
     </div>
   </div>
 </template>
-
 
 <script setup>
 import { ref, onMounted } from 'vue'
@@ -45,7 +50,19 @@ function goBack() {
 }
 </script>
 
-<style>
+<style scoped>
+.calendar-container {
+  text-align: center;
+  max-width: 900px;
+  margin: auto;
+  margin-top: 2rem;
+  padding: 2rem;
+  background: #fffaf3;
+  border-radius: 20px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  font-family: 'Special Elite', monospace;
+}
+
 .page-card {
   background-color: #fff;
   border-radius: 16px;
@@ -79,5 +96,33 @@ function goBack() {
 
 .back-button:hover {
   transform: scale(1.2);
+}
+
+.rainbow-title {
+  font-size: 2rem;
+  font-weight: bold;
+  background: linear-gradient(to right,
+      #ff4e50,
+      #fc913a,
+      #f9d423,
+      #e2f356,
+      #7ed957,
+      #00c9a7,
+      #2e86de,
+      #9b59b6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-family: 'Dancing Script', cursive;
+}
+
+.page-icon-link {
+  font-size: 1.4rem;
+  margin-left: 0.5rem;
+  text-decoration: none;
+  transition: transform 0.2s ease;
+}
+
+.page-icon-link:hover {
+  transform: scale(1.3);
 }
 </style>
