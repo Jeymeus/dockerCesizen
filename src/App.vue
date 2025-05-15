@@ -17,7 +17,7 @@
     </main>
 
     <!-- Footer -->
-    <Footer />
+    <Footer class="mt-4" />
 
     <!-- Navbar bottom (mobile) -->
     <div class="d-md-none">

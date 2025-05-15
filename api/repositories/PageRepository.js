@@ -85,6 +85,15 @@ class PageRepository {
         const result = stmt.run(id)
         return result.changes > 0
     }
+
+    async findByMenuId(menuId) {
+        await initDB()
+        const db = getDB()
+        const stmt = db.prepare('SELECT * FROM pages WHERE menu_id = ? AND visible = 1')
+        const rows = stmt.all(menuId)
+        return rows.map(row => new Page(row))
+    }
+      
 }
 
 export const pageRepository = new PageRepository()

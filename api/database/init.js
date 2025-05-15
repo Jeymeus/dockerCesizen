@@ -69,50 +69,85 @@ export const initDB = async () => {
   `)
 
   // Insérer les émotions préconfigurées si elles n'existent pas
-  db.exec(`
-    INSERT OR IGNORE INTO emotions (label, category) VALUES
-    ('Fierté', 'Joie'),
-    ('Contentement', 'Joie'),
-    ('Enchantement', 'Joie'),
-    ('Excitation', 'Joie'),
-    ('Émerveillement', 'Joie'),
-    ('Gratitude', 'Joie'),
+  // db.exec(`
+  //   INSERT OR IGNORE INTO emotions (label, category) VALUES
+  //   ('Fierté', 'Joie'),
+  //   ('Contentement', 'Joie'),
+  //   ('Enchantement', 'Joie'),
+  //   ('Excitation', 'Joie'),
+  //   ('Émerveillement', 'Joie'),
+  //   ('Gratitude', 'Joie'),
 
-    ('Frustration', 'Colère'),
-    ('Irritation', 'Colère'),
-    ('Rage', 'Colère'),
-    ('Ressentiment', 'Colère'),
-    ('Agacement', 'Colère'),
-    ('Hostilité', 'Colère'),
+  //   ('Frustration', 'Colère'),
+  //   ('Irritation', 'Colère'),
+  //   ('Rage', 'Colère'),
+  //   ('Ressentiment', 'Colère'),
+  //   ('Agacement', 'Colère'),
+  //   ('Hostilité', 'Colère'),
 
-    ('Inquiétude', 'Peur'),
-    ('Anxiété', 'Peur'),
-    ('Terreur', 'Peur'),
-    ('Appréhension', 'Peur'),
-    ('Panique', 'Peur'),
-    ('Crainte', 'Peur'),
+  //   ('Inquiétude', 'Peur'),
+  //   ('Anxiété', 'Peur'),
+  //   ('Terreur', 'Peur'),
+  //   ('Appréhension', 'Peur'),
+  //   ('Panique', 'Peur'),
+  //   ('Crainte', 'Peur'),
 
-    ('Chagrin', 'Tristesse'),
-    ('Mélancolie', 'Tristesse'),
-    ('Abattement', 'Tristesse'),
-    ('Désespoir', 'Tristesse'),
-    ('Solitude', 'Tristesse'),
-    ('Dépression', 'Tristesse'),
+  //   ('Chagrin', 'Tristesse'),
+  //   ('Mélancolie', 'Tristesse'),
+  //   ('Abattement', 'Tristesse'),
+  //   ('Désespoir', 'Tristesse'),
+  //   ('Solitude', 'Tristesse'),
+  //   ('Dépression', 'Tristesse'),
 
-    ('Étonnement', 'Surprise'),
-    ('Stupéfaction', 'Surprise'),
-    ('Sidération', 'Surprise'),
-    ('Incrédulité', 'Surprise'),
-    ('Émerveillement', 'Surprise'),
-    ('Confusion', 'Surprise'),
+  //   ('Étonnement', 'Surprise'),
+  //   ('Stupéfaction', 'Surprise'),
+  //   ('Sidération', 'Surprise'),
+  //   ('Incrédulité', 'Surprise'),
+  //   ('Émerveillement', 'Surprise'),
+  //   ('Confusion', 'Surprise'),
 
-    ('Répulsion', 'Dégoût'),
-    ('Déplaisir', 'Dégoût'),
-    ('Nausée', 'Dégoût'),
-    ('Dédain', 'Dégoût'),
-    ('Horreur', 'Dégoût'),
-    ('Dégoût profond', 'Dégoût');
-  `)
+  //   ('Répulsion', 'Dégoût'),
+  //   ('Déplaisir', 'Dégoût'),
+  //   ('Nausée', 'Dégoût'),
+  //   ('Dédain', 'Dégoût'),
+  //   ('Horreur', 'Dégoût'),
+  //   ('Dégoût profond', 'Dégoût');
+  // `)
+
+//   db.exec(`INSERT INTO pages (title, url, content, visible, count_view, menu_id, created_at)
+// VALUES
+// -- Article 1
+// ('Comprendre ses émotions au quotidien', 'https://example.com/emotions-quotidien',
+//  'Un article pour mieux appréhender la palette émotionnelle que nous vivons chaque jour.', 1, 0, 1, CURRENT_TIMESTAMP),
+
+// -- Article 2
+// ('Les émotions dans le milieu professionnel', 'https://example.com/emotions-travail',
+//  'Découvrez comment la gestion émotionnelle influence notre vie au travail.', 1, 0, 1, CURRENT_TIMESTAMP),
+
+// -- Article 3
+// ('Éducation émotionnelle : un enjeu de société', 'https://example.com/education-emotionnelle',
+//  'Pourquoi enseigner les émotions dès le plus jeune âge est essentiel.', 1, 0, 1, CURRENT_TIMESTAMP),
+
+// -- Article 4
+// ('Intelligence émotionnelle et leadership', 'https://example.com/intelligence-emotionnelle-leadership',
+//  'Le lien entre émotions maîtrisées et capacité à diriger.', 1, 0, 1, CURRENT_TIMESTAMP),
+
+// -- Article 5
+// ('Santé mentale et émotions : quelles connexions ?', 'https://example.com/sante-mentale-emotions',
+//  'Une plongée dans les liens entre équilibre émotionnel et bien-être psychique.', 1, 0, 1, CURRENT_TIMESTAMP),
+
+// -- Article 6
+// ('Exprimer ses émotions : force ou faiblesse ?', 'https://example.com/exprimer-emotions',
+//  'Briser les tabous sur la vulnérabilité émotionnelle dans nos sociétés.', 1, 0, 1, CURRENT_TIMESTAMP),
+
+// -- Article 7
+// ('Les émotions sur les réseaux sociaux', 'https://example.com/emotions-reseaux-sociaux',
+//  'Comment nos émotions sont exposées, influencées et manipulées en ligne.', 1, 0, 1, CURRENT_TIMESTAMP),
+
+// -- Article 8
+// ('Gérer ses émotions en période de crise', 'https://example.com/emotions-crise',
+//  'Des techniques concrètes pour garder son calme en situation difficile.', 1, 0, 1, CURRENT_TIMESTAMP);
+//   `)
 
   console.log('✅ Base de données SQLite initialisée avec succès')
   return db

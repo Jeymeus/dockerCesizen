@@ -1,4 +1,5 @@
 import { pageRepository } from '../repositories/PageRepository.js'
+import { menuRepository } from '../repositories/MenuRepository.js'
 import { sanitizePagePayload } from '../utils/sanitize.js'
 
 /**
@@ -71,3 +72,17 @@ export const deletePage = async (req, res) => {
         res.status(500).json({ error: 'Erreur lors de la suppression de la page' })
     }
 }
+
+export const getPagesByMenuId = async (req, res) => {
+    try {
+        const menu = await menuRepository.findById(req.params.id)
+        if (!menu) return res.status(404).json({ error: 'Menu introuvable' })
+
+        const pages = await pageRepository.findByMenuId(menu.id)
+        res.json({ menu, pages })
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ error: 'Erreur serveur' })
+    }
+}
+  

@@ -26,7 +26,7 @@ app.use(express.json())
 app.use('/api/auth', authRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/emotions', emotionRoutes)
-app.use('/api/entries', entryRoutes)      // anciennement "journal"
+app.use('/api/entries', entryRoutes)      
 app.use('/api/menus', menuRoutes)
 app.use('/api/pages', pageRoutes)
 

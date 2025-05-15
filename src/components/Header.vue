@@ -11,11 +11,10 @@
             <font-awesome-icon icon="bars" />
           </button>
           <ul class="dropdown-menu" aria-labelledby="menuDropdown">
-            <li>
-              <router-link class="dropdown-item" to="/menu">Général</router-link>
-            </li>
             <li v-for="menu in menus" :key="menu.id">
-              <router-link class="dropdown-item" :to="`/menu/${menu.slug}`">{{ menu.title }}</router-link>
+              <router-link class="dropdown-item" :to="`/menu/${menu.id}`">
+                {{ menu.title }}
+              </router-link>
             </li>
           </ul>
         </div>
