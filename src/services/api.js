@@ -16,7 +16,7 @@ api.interceptors.request.use(config => {
     return config
 })
 
-// 🛠️ Gestion globale des erreurs (optionnelle mais pratique)
+// 🛠️ Gestion globale des erreurs
 api.interceptors.response.use(
     res => res,
     err => {

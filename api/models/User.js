@@ -16,6 +16,16 @@ export default class User extends BaseModel {
             throw new Error('[User] Données invalides : certains champs requis sont manquants')
         }
 
+        if (data.firstname.length > 30) {
+            throw new Error('[User] Le prénom ne doit pas dépasser 30 caractères')
+        }
+        if (data.lastname.length > 30) {
+            throw new Error('[User] Le nom ne doit pas dépasser 30 caractères')
+        }
+        if (data.email.length > 50) {
+            throw new Error('[User] L’email ne doit pas dépasser 50 caractères')
+        }
+
         const validRoles = ['user', 'admin']
         if (!validRoles.includes(data.role)) {
             throw new Error(`[User] Rôle invalide : "${data.role}"`)

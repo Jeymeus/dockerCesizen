@@ -77,7 +77,17 @@ const routes = [
         path: '/admin/:section/:id/edit',
         name: 'AdminEdit',
         component: () => import('../views/AdminEdit.vue')
+    },
+    {
+        path: '/404',
+        name: 'NotFound',
+        component: () => import('../views/NotFound.vue')
+    },
+    {
+        path: '/:catchAll(.*)',
+        redirect: '/404'
     }
+    
 ]
 
 const router = createRouter({
@@ -94,15 +104,19 @@ router.beforeEach(async (to, from, next) => {
         await userStore.loadUserFromToken()
     }
 
+    // 👮 Bloc spécifique aux routes admin
+    if (to.path.startsWith('/admin')) {
+        if (!userStore.isAuthenticated || !userStore.requireAdmin) {
+            return next({ path: '/404', replace: true })
+        }
+    }
+    
     // 🔐 Authentification requise ?
     if (to.meta.requiresAuth && !userStore.isAuthenticated) {
         return next('/login')
     }
 
-    // 👮 Autorisation admin requise ?
-    if (to.meta.requireAdmin && !userStore.requireAdmin) {
-        return next('/login')
-    }
+
 
     // ✅ Sinon, accès autorisé
     next()

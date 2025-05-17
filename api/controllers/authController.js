@@ -17,18 +17,26 @@ export const register = async (req, res) => {
         return res.status(409).json({ error: 'Email déjà utilisé' })
     }
 
-    const hashed = await bcrypt.hash(password, 10)
-    const user = await userRepository.create({
-        firstname,
-        lastname,
-        email,
-        password: hashed,
-        role: 'user'
-    })
+    try {
+        const hashed = await bcrypt.hash(password, 10)
 
-    const token = generateToken({ id: user.id, role: user.role })
-    res.status(201).json({ token, user })
+        // 💥 Peut throw ici → longueur, rôle invalide, etc.
+        const user = await userRepository.create({
+            firstname,
+            lastname,
+            email,
+            password: hashed,
+            role: req.body.role ?? 'user'
+        })
+
+        const token = generateToken({ id: user.id, role: user.role })
+        res.status(201).json({ token, user })
+    } catch (error) {
+        console.error('[register] Erreur :', error.message)
+        res.status(400).json({ error: error.message })
+    }
 }
+
 
 // 🔑 POST /auth/login
 export const login = async (req, res) => {
@@ -84,7 +92,7 @@ export const forgotPassword = async (req, res) => {
 
     try {
         const user = await userRepository.findByEmail(email)
-        if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' })
+        if (!user) return res.status(404).json({ error: `Si l'utilisateur existe vous recevrez un lien de réinitialisation sur votre boite mail` })
 
         const token = generateToken({ id: user.id }, '15m')
         const resetLink = `/reset-password/${token}`
@@ -107,7 +115,7 @@ export const publicResetPassword = async (req, res) => {
     try {
         const decoded = verifyToken(token)
         const user = await userRepository.findById(decoded.id)
-        if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' })
+        if (!user) return res.status(404).json({ error: 'Utilisateur introuvable'})
 
         const hashed = await bcrypt.hash(newPassword, 10)
         const db = getDB()

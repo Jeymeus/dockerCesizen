@@ -39,12 +39,16 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+
 import api from '../services/api'
 
 const selectedDate = ref(new Date())
 const entries = ref([])
 const emotions = ref([])
 const selectedCategory = ref('Joie')
+const route = useRoute()
+const router = useRouter()
 
 const categories = ['Joie', 'Colère', 'Peur', 'Tristesse', 'Surprise', 'Dégoût']
 
@@ -53,17 +57,32 @@ function getLocalDateString(date) {
 }
 
 onMounted(async () => {
+    const token = localStorage.getItem('token') // ou sessionStorage
+    if (!token) {
+        // Rediriger vers login si non connecté
+        router.push('/login')
+        return
+    }
+
     try {
-        const [resEmo, resEntries] = await Promise.all([
-            api.get('/emotions'),
-            api.get('/entries')
-        ])
-        emotions.value = resEmo.data
-        entries.value = resEntries.data
+        const response = await fetch('http://localhost:3000/api/emotions', {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        })
+
+        if (!response.ok) {
+            throw new Error('Erreur lors du chargement des émotions')
+        }
+
+        const data = await response.json()
+        emotions.value = data
     } catch (error) {
-        console.error('Erreur chargement données :', error)
+        console.error(error)
+        errorMessage.value = 'Accès refusé. Connectez-vous pour voir les émotions.'
     }
 })
+
 
 const filteredEmotions = computed(() =>
     emotions.value.filter(e => e.category === selectedCategory.value)

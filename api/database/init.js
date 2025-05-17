@@ -14,59 +14,59 @@ export const initDB = async () => {
   db.pragma('foreign_keys = ON')
 
   // On ne recrée pas les tables, mais on s'assure qu'elles existent
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      firstname TEXT NOT NULL,
-      lastname TEXT NOT NULL,
-      email TEXT NOT NULL UNIQUE,
-      password TEXT NOT NULL,
-      role TEXT CHECK(role IN ('user', 'admin')) DEFAULT 'user',
-      active INTEGER DEFAULT 1,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME
-    );
+  // db.exec(`
+  //   CREATE TABLE IF NOT EXISTS users (
+  //     id INTEGER PRIMARY KEY AUTOINCREMENT,
+  //     firstname TEXT NOT NULL,
+  //     lastname TEXT NOT NULL,
+  //     email TEXT NOT NULL UNIQUE,
+  //     password TEXT NOT NULL,
+  //     role TEXT CHECK(role IN ('user', 'admin')) DEFAULT 'user',
+  //     active INTEGER DEFAULT 1,
+  //     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  //     updated_at DATETIME
+  //   );
 
-    CREATE TABLE IF NOT EXISTS menus (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL
-    );
+  //   CREATE TABLE IF NOT EXISTS menus (
+  //     id INTEGER PRIMARY KEY AUTOINCREMENT,
+  //     title TEXT NOT NULL
+  //   );
 
-    CREATE TABLE IF NOT EXISTS pages (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      url TEXT NOT NULL,
-      content TEXT,
-      visible INTEGER DEFAULT 1,
-      count_view INTEGER DEFAULT 0,
-      menu_id INTEGER,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME,
-      FOREIGN KEY (menu_id) REFERENCES menus(id)
-    );
+  //   CREATE TABLE IF NOT EXISTS pages (
+  //     id INTEGER PRIMARY KEY AUTOINCREMENT,
+  //     title TEXT NOT NULL,
+  //     url TEXT NOT NULL,
+  //     content TEXT,
+  //     visible INTEGER DEFAULT 1,
+  //     count_view INTEGER DEFAULT 0,
+  //     menu_id INTEGER,
+  //     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  //     updated_at DATETIME,
+  //     FOREIGN KEY (menu_id) REFERENCES menus(id)
+  //   );
 
-    CREATE TABLE IF NOT EXISTS emotions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      label TEXT NOT NULL,
-      category TEXT NOT NULL,
-      emoji TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME,
-      UNIQUE(label, category)
-    );
+  //   CREATE TABLE IF NOT EXISTS emotions (
+  //     id INTEGER PRIMARY KEY AUTOINCREMENT,
+  //     label TEXT NOT NULL,
+  //     category TEXT NOT NULL,
+  //     emoji TEXT,
+  //     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  //     updated_at DATETIME,
+  //     UNIQUE(label, category)
+  //   );
 
-    CREATE TABLE IF NOT EXISTS entries (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      emotion_id INTEGER NOT NULL,
-      note TEXT,
-      date_entry DATE NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME,
-      FOREIGN KEY (user_id) REFERENCES users(id),
-      FOREIGN KEY (emotion_id) REFERENCES emotions(id)
-    );
-  `)
+  //   CREATE TABLE IF NOT EXISTS entries (
+  //     id INTEGER PRIMARY KEY AUTOINCREMENT,
+  //     user_id INTEGER NOT NULL,
+  //     emotion_id INTEGER NOT NULL,
+  //     note TEXT,
+  //     date_entry DATE NOT NULL,
+  //     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  //     updated_at DATETIME,
+  //     FOREIGN KEY (user_id) REFERENCES users(id),
+  //     FOREIGN KEY (emotion_id) REFERENCES emotions(id)
+  //   );
+  // `)
 
   // Insérer les émotions préconfigurées si elles n'existent pas
   // db.exec(`
