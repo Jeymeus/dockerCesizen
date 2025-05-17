@@ -67,6 +67,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api'
 import { useUserStore } from '../stores/userStore'
+import { useReCaptcha } from 'vue-recaptcha-v3'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -80,15 +81,27 @@ const password = ref('')
 const confirmPassword = ref('')
 const error = ref(null)
 const loading = ref(false)
+const { executeRecaptcha } = useReCaptcha()
+
 
 const handleLogin = async () => {
   loading.value = true
   error.value = null
   try {
+
+    const token = await executeRecaptcha('login')
+    if (!token) {
+      error.value = 'Échec de validation captcha'
+      loading.value = false
+      return
+    }
+
     const res = await api.post('/auth/login', {
       email: email.value,
-      password: password.value
+      password: password.value,
+      recaptchaToken: token
     })
+
     userStore.setUser({ user: res.data.user, token: res.data.token })
     router.push('/dashboard')
   } catch (err) {
@@ -144,16 +157,27 @@ const handleRegister = async () => {
 
   // ✅ Si tout est OK → appel API
   try {
+    const token = await executeRecaptcha('register')
+    console.log('token reçu :', token)
+
+    if (!token) {
+      error.value = 'Échec de validation captcha'
+      loading.value = false
+      return
+    }
+
     const res = await api.post('/auth/register', {
       firstname: firstname.value,
       lastname: lastname.value,
       email: email.value,
-      password: password.value
+      password: password.value,
+      recaptchaToken: token
     })
 
     userStore.setUser(res.data)
     router.push('/dashboard')
   } catch (err) {
+    console.error('[REGISTER]', err)
     error.value = err.response?.data?.error || "Échec de l'inscription"
   } finally {
     loading.value = false
