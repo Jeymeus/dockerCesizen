@@ -244,6 +244,7 @@ async function addEmotion(emotionId) {
 }
 
 .rainbow-title {
+    
     font-size: 2rem;
     font-weight: bold;
     background: linear-gradient(to right,

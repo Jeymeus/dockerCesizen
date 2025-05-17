@@ -1,6 +1,8 @@
 import { userRepository } from '../repositories/UserRepository.js'
 import { verifyToken } from '../utils/jwt.js'
 import { sanitizeUserPayload } from '../utils/sanitize.js'
+import bcrypt from 'bcrypt'
+
 
 /**
  * 🔄 GET /users
@@ -35,7 +37,7 @@ export const getUserById = async (req, res) => {
  * Met à jour le profil de l'utilisateur connecté
  */
 export const updateProfile = async (req, res) => {
-    const { firstname, lastname, email } = req.body
+    const { firstname, lastname, email, password } = req.body
     const userId = req.user?.id
 
     if (!firstname || !lastname || !email) {
@@ -43,7 +45,14 @@ export const updateProfile = async (req, res) => {
     }
 
     try {
-        const updatedUser = await userRepository.update(userId, { firstname, lastname, email })
+        const updateFields = { firstname, lastname, email }
+
+        if (password && password.trim() !== '') {
+            const hashedPassword = await bcrypt.hash(password, 10)
+            updateFields.password = hashedPassword
+        }
+
+        const updatedUser = await userRepository.update(userId, updateFields)
         res.json(updatedUser)
     } catch (error) {
         console.error(error)

@@ -48,7 +48,12 @@ const app = createApp(App)
 app.use(createPinia())
 app.component('font-awesome-icon', FontAwesomeIcon)
 app.use(VCalendar, {})
-app.use(VueReCaptcha, {siteKey: '6LeKMj4rAAAAALI0pD-V8Nl7GWDxDcZf1tDL4iXd'})
+app.use(VueReCaptcha, {
+    siteKey: '6LeKMj4rAAAAALI0pD-V8Nl7GWDxDcZf1tDL4iXd',
+    loaderOptions: {
+        autoHideBadge: true // pour ne pas polluer l'UI globale
+    }
+  })
 app.use(router)
 app.mount('#app')
 

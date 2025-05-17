@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../views/Login.vue'
-import Register from '../views/Register.vue'
+// import Register from '../views/Register.vue'
 import Dashboard from '../views/Dashboard.vue'
 import Journal from '../views/Journal.vue'
 import Home from '../views/Home.vue'
@@ -13,7 +13,7 @@ import { useUserStore } from '../stores/userStore'
 const routes = [
     { path: '/', name: 'Home', component: Home },
     { path: '/login', name: 'Login', component: Login },
-    { path: '/register', name: 'Register', component: Register },
+    // { path: '/register', name: 'Register', component: Register },
     {
         path: '/dashboard',
         name: 'Dashboard',
@@ -50,6 +50,12 @@ const routes = [
         path: '/profil',
         name: 'Profil',
         component: Profil,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/profil/edit',
+        name: 'ProfilEdit',
+        component: () => import('../views/EditUser.vue'),
         meta: { requiresAuth: true }
     },
     {

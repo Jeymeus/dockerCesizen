@@ -32,7 +32,8 @@
             </div>
             <div class="mb-3">
               <label for="password" class="form-label">Mot de passe </label>
-              <input type="password" v-model="password" id="password" class="form-control" placeholder="8 caractères minimum" required />
+              <input type="password" v-model="password" id="password" class="form-control"
+                placeholder="8 caractères minimum" required />
             </div>
             <div class="mb-2" v-if="mode === 'register' && password">
               <div class="password-meter mb-3" v-if="mode === 'register' && password.length > 0">
@@ -56,6 +57,11 @@
               </router-link>
             </p>
           </form>
+          <p class="text-muted small text-center mt-3">
+            Ce site est protégé par reCAPTCHA –
+            <a href="https://policies.google.com/privacy" target="_blank">Politique de confidentialité</a> et
+            <a href="https://policies.google.com/terms" target="_blank">Conditions d'utilisation</a> s'appliquent.
+          </p>
         </div>
       </div>
     </div>
@@ -68,6 +74,7 @@ import { useRouter } from 'vue-router'
 import api from '../services/api'
 import { useUserStore } from '../stores/userStore'
 import { useReCaptcha } from 'vue-recaptcha-v3'
+
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -82,7 +89,6 @@ const confirmPassword = ref('')
 const error = ref(null)
 const loading = ref(false)
 const { executeRecaptcha } = useReCaptcha()
-
 
 const handleLogin = async () => {
   loading.value = true
