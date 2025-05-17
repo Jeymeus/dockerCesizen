@@ -31,7 +31,7 @@
 </template>
 
 <script setup>
-import { useUserStore } from '../stores/userStore'
+import { useUserStore } from '../../stores/userStore'
 import { computed } from 'vue'
 
 const store = useUserStore()

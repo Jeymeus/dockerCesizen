@@ -27,7 +27,7 @@
 </template>
 
 <script setup>
-import Header from './components/Header.vue'
-import Footer from './components/Footer.vue'
-import BottomNavbar from './components/BottomNavbar.vue'
+import Header from './components/common/Header.vue'
+import Footer from './components/common/Footer.vue'
+import BottomNavbar from './components/common/BottomNavbar.vue'
 </script>

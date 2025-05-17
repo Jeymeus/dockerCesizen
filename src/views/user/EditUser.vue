@@ -45,10 +45,10 @@
 </template>
 
 <script setup>
-import { useUserStore } from '../stores/userStore'
+import { useUserStore } from '../../stores/userStore'
 import { useRouter } from 'vue-router'
 import { ref, reactive } from 'vue'
-import api from '../services/api'
+import api from '../../services/api'
 
 const userStore = useUserStore()
 const router = useRouter()

@@ -69,9 +69,9 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import AdminSidebar from '../components/AdminSidebar.vue'
-import ResourceModal from '../components/ResourceModal.vue'
-import * as AdminAPI from '../services/adminService'
+import AdminSidebar from '../../components/admin/AdminSidebar.vue'
+import ResourceModal from '../../components/menu/ResourceModal.vue'
+import * as AdminAPI from '../../services/adminService'
 import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter()

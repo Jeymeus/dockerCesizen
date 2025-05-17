@@ -1,19 +1,20 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Login from '../views/Login.vue'
-// import Register from '../views/Register.vue'
-import Dashboard from '../views/Dashboard.vue'
-import Journal from '../views/Journal.vue'
-import Home from '../views/Home.vue'
-import Menu from '../views/Menu.vue'
-import Page from '../views/Page.vue'
-import Profil from '../views/Profil.vue'
-import Admin from '../views/Admin.vue'
 import { useUserStore } from '../stores/userStore'
+
+// 🧩 Imports directs
+import Login from '../views/auth/Login.vue'
+import Dashboard from '../views/public/Dashboard.vue'
+import Journal from '../views/journal/Journal.vue'
+import Home from '../views/public/Home.vue'
+import Menu from '../views/menu/Menu.vue'
+import Page from '../views/menu/Page.vue'
+import Profil from '../views/user/Profil.vue'
+import Admin from '../views/admin/Admin.vue'
 
 const routes = [
     { path: '/', name: 'Home', component: Home },
     { path: '/login', name: 'Login', component: Login },
-    // { path: '/register', name: 'Register', component: Register },
+
     {
         path: '/dashboard',
         name: 'Dashboard',
@@ -23,8 +24,8 @@ const routes = [
     {
         path: '/emotions',
         name: 'Emotions',
-        component: () => import('../views/Emotions.vue')
-    },      
+        component: () => import('../views/journal/Emotions.vue')
+    },
     {
         path: '/journal',
         name: 'Journal',
@@ -55,18 +56,18 @@ const routes = [
     {
         path: '/profil/edit',
         name: 'ProfilEdit',
-        component: () => import('../views/EditUser.vue'),
+        component: () => import('../views/user/EditUser.vue'),
         meta: { requiresAuth: true }
     },
     {
         path: '/forgot-password',
         name: 'ForgotPassword',
-        component: () => import('../views/ForgotPassword.vue')
+        component: () => import('../views/auth/ForgotPassword.vue')
     },
     {
         path: '/reset-password/:token',
         name: 'ResetPassword',
-        component: () => import('../views/ResetPassword.vue')
+        component: () => import('../views/auth/ResetPassword.vue')
     },
     {
         path: '/admin',
@@ -77,23 +78,24 @@ const routes = [
     {
         path: '/admin/:section/new',
         name: 'AdminAdd',
-        component: () => import('../views/AdminAdd.vue')
-    },      
+        component: () => import('../views/admin/AdminAdd.vue'),
+        meta: { requiresAuth: true, requireAdmin: true }
+    },
     {
         path: '/admin/:section/:id/edit',
         name: 'AdminEdit',
-        component: () => import('../views/AdminEdit.vue')
+        component: () => import('../views/admin/AdminEdit.vue'),
+        meta: { requiresAuth: true, requireAdmin: true }
     },
     {
         path: '/404',
         name: 'NotFound',
-        component: () => import('../views/NotFound.vue')
+        component: () => import('../views/public/NotFound.vue')
     },
     {
         path: '/:catchAll(.*)',
         redirect: '/404'
     }
-    
 ]
 
 const router = createRouter({
@@ -105,7 +107,6 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
     const userStore = useUserStore()
 
-    // Recharge le user depuis le token s'il n'est pas encore chargé
     if (!userStore.user && userStore.token) {
         await userStore.loadUserFromToken()
     }
@@ -116,17 +117,13 @@ router.beforeEach(async (to, from, next) => {
             return next({ path: '/404', replace: true })
         }
     }
-    
+
     // 🔐 Authentification requise ?
     if (to.meta.requiresAuth && !userStore.isAuthenticated) {
         return next('/login')
     }
 
-
-
-    // ✅ Sinon, accès autorisé
     next()
 })
-
 
 export default router

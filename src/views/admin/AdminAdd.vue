@@ -13,7 +13,7 @@
                         <font-awesome-icon icon="arrow-left" />
                     </button>
                     <h4 class="mb-0">
-                        Création d’un(e) {{ section }}
+                        Création : {{ section }}
                     </h4>
                 </div>
                 <div class="d-flex gap-2">
@@ -82,8 +82,8 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import * as AdminAPI from '../services/adminService'
-import AdminSidebar from '../components/AdminSidebar.vue'
+import * as AdminAPI from '../../services/adminService'
+import AdminSidebar from '../../components/admin/AdminSidebar.vue'
 
 const route = useRoute()
 const router = useRouter()

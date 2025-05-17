@@ -41,7 +41,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
-import api from '../services/api'
+import api from '../../services/api'
 
 const selectedDate = ref(new Date())
 const entries = ref([])

@@ -92,8 +92,8 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import AdminSidebar from '../components/AdminSidebar.vue'
-import * as AdminAPI from '../services/adminService'
+import AdminSidebar from '../../components/admin/AdminSidebar.vue'
+import * as AdminAPI from '../../services/adminService'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 const route = useRoute()

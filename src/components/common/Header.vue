@@ -37,8 +37,8 @@
 </template>
 
 <script setup>
-import { useUserStore } from '../stores/userStore'
-import { useMenuStore } from '../stores/menuStore'
+import { useUserStore } from '../../stores/userStore'
+import { useMenuStore } from '../../stores/menuStore'
 import { useRouter } from 'vue-router'
 import { computed, onMounted } from 'vue'
 

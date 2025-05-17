@@ -44,10 +44,10 @@
 <script setup>
 import { onMounted, ref, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import api from '../services/api'
+import api from '../../services/api'
 
-import ArticleGrid from '../components/ArticleGrid.vue'
-import VideoGrid from '../components/VideoGrid.vue'
+import ArticleGrid from '../../components/menu/ArticleGrid.vue'
+import VideoGrid from '../../components/menu/VideoGrid.vue'
 
 const route = useRoute()
 const pages = ref([])

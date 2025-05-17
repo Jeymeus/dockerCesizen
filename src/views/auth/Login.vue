@@ -71,8 +71,8 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import api from '../services/api'
-import { useUserStore } from '../stores/userStore'
+import api from '../../services/api'
+import { useUserStore } from '../../stores/userStore'
 import { useReCaptcha } from 'vue-recaptcha-v3'
 
 
@@ -203,7 +203,7 @@ const passwordStrength = computed(() => {
 const passwordColor = computed(() => {
   if (passwordStrength.value < 50) return '#dc3545'
   if (passwordStrength.value < 75) return '#ffc107'
-  return '#28a745'                                  
+  return '#28a745'
 })
 
 const passwordLabel = computed(() => {
