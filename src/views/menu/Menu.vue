@@ -170,9 +170,9 @@ watch(() => route.params.id, (id) => {
   transition: transform 0.2s ease;
 }
 
-.page-card:hover {
+/* .page-card:hover {
   transform: scale(1.02);
-}
+} */
 
 .card {
   background: #fff8e6;

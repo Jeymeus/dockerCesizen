@@ -6,6 +6,11 @@
 
     <!-- CALENDRIER -->
     <v-calendar is-expanded :attributes="calendarAttributes" @dayclick="onDayClick" color="orange" />
+    <div class="text-center mt-3 mb-4">
+      <router-link to="/rapport" class="btn btn-warning shadow-sm">
+        📊 Générer un rapport d’émotions
+      </router-link>
+    </div>
 
     <!-- TABLEAU DES ENTRÉES DU MOIS -->
     <div v-if="monthlyEntries.length" class="mt-5">

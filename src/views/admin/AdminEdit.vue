@@ -222,5 +222,9 @@ onMounted(fetchItem)
 textarea {
     resize: vertical;
 }
+.card:hover {
+    transform: none !important;
+    transition: none !important;
+}
 </style>
   

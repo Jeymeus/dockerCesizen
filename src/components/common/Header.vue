@@ -13,6 +13,9 @@
             <font-awesome-icon icon="bars" />
           </button>
           <ul class="dropdown-menu" aria-labelledby="menuDropdown">
+            <li>
+              <router-link class="dropdown-item" to="/menu">Menu</router-link>
+            </li>
             <li v-for="menu in menus" :key="menu.id">
               <router-link class="dropdown-item" :to="`/menu/${menu.id}`">
                 {{ menu.title }}

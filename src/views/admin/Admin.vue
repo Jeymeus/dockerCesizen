@@ -36,7 +36,7 @@
       <!-- TABLEAU -->
       <div class="card shadow">
         <div class="card-body table-responsive p-0">
-          <table class="table table-hover table-striped mb-0">
+          <table class="table mb-0">
             <thead class="table-light text-center">
               <tr>
                 <th v-for="col in activeDescriptor.columns" :key="col.key">{{ col.label }}</th>
@@ -47,7 +47,10 @@
               <tr v-for="item in filteredItems" :key="item.id">
                 <td class="text-center" v-for="col in activeDescriptor.columns" :key="col.key">{{ item[col.key] }}</td>
                 <td class="text-center">
-                  <button class="btn btn-sm btn-info me-2" @click="showItem(item)">👁️</button>
+                  <button class="btn btn-info btn-sm me-1" @click="showItem(item)">👁️</button>
+                  <button class="btn btn-warning btn-sm me-1" @click="editItem(item)">✏️</button>
+                  <button class="btn btn-danger btn-sm me-1" @click="deleteItem(item)">🗑</button>
+
                 </td>
               </tr>
               <tr v-if="filteredItems.length === 0">
@@ -341,5 +344,14 @@ watch(section, fetchData)
 <style scoped>
 body {
   background-color: #212529;
+}
+
+.card:hover {
+  transform: none !important;
+  transition: none !important;
+}
+
+footer {
+  margin-top: 0px !important;
 }
 </style>

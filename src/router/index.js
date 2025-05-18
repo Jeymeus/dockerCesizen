@@ -33,6 +33,12 @@ const routes = [
         meta: { requiresAuth: true }
     },
     {
+        path: '/rapport',
+        name: 'Rapport',
+        component: () => import('../views/journal/Report.vue'),
+        meta: { requiresAuth: true }
+    },      
+    {
         path: '/menu',
         name: 'MenuGeneral',
         component: Menu

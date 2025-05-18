@@ -71,9 +71,9 @@ function goBack() {
   transition: transform 0.2s ease;
 }
 
-.page-card:hover {
+/* .page-card:hover {
   transform: scale(1.01);
-}
+} */
 
 .card-text {
   font-family: 'Special Elite', monospace;

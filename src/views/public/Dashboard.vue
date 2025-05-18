@@ -18,10 +18,9 @@
           <router-link class="btn btn-outline-secondary" to="/emotions">
             😊 Explorer les émotions
           </router-link>
-          <button class="btn btn-outline-warning" @click="showReportModal = true">
-            📊 Générer un rapport émotionnel
-          </button>
-          <ReportModal v-if="showReportModal" @close="showReportModal = false" />
+          <router-link class="btn btn-outline-warning" to="/rapport">
+            📊 Générer un rapport
+          </router-link>
           <router-link v-if="requireAdmin" class="btn btn-outline-danger" to="/admin">
             🛠 Panneau d'administration
           </router-link>
@@ -34,7 +33,6 @@
 <script setup>
 import { useUserStore } from '../../stores/userStore'
 import { computed, ref } from 'vue'
-import ReportModal from '@/components/common/ReportModal.vue'
 
 const showReportModal = ref(false)
 
