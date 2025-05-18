@@ -98,36 +98,25 @@ export const getEntryById = async (req, res) => {
 
 // ➡ Voir un rapport par période
 export const getMyReport = async (req, res) => {
+    console.error('getMyReport')
     const userId = req.user.id
-    const { period } = req.query
-
-    if (!['week', 'month', 'quarter', 'year'].includes(period)) {
-        return res.status(400).json({ error: 'Période invalide' })
+    const { start, end } = req.query
+    console.error('userId:', userId)
+    console.error('start:', start)
+    console.error('end:', end)
+    console.error('req.query:', req.query)
+    // 🧪 Vérification des dates
+    if (!start || !end) {
+        return res.status(400).json({ error: 'Dates de début et de fin requises (start, end)' })
     }
-
-    // ➔ On calcule la date de début en fonction de la période
-    const today = new Date()
-    let startDate = new Date()
-
-    if (period === 'week') {
-        startDate.setDate(today.getDate() - 7)
-    } else if (period === 'month') {
-        startDate.setMonth(today.getMonth() - 1)
-    } else if (period === 'quarter') {
-        startDate.setMonth(today.getMonth() - 3)
-    } else if (period === 'year') {
-        startDate.setFullYear(today.getFullYear() - 1)
-    }
-
-    const start = startDate.toISOString().split('T')[0]
-    const end = today.toISOString().split('T')[0]
 
     try {
         // Récupération du rapport par période via le Repository
         const report = await entryRepository.getReportByPeriod(userId, start, end)
         res.json(report)
     } catch (error) {
-        console.error(error)
+        console.error('Erreur rapport:', error)
         res.status(500).json({ error: 'Erreur lors de la génération du rapport' })
     }
 }
+

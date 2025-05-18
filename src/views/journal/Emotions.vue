@@ -57,31 +57,25 @@ function getLocalDateString(date) {
 }
 
 onMounted(async () => {
-    const token = localStorage.getItem('token') // ou sessionStorage
+    const token = localStorage.getItem('token')
     if (!token) {
-        // Rediriger vers login si non connecté
         router.push('/login')
         return
     }
 
     try {
-        const response = await fetch('http://localhost:3000/api/emotions', {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        })
+        const [emotionsRes, entriesRes] = await Promise.all([
+            api.get('/emotions'),
+            api.get('/entries')
+        ])
 
-        if (!response.ok) {
-            throw new Error('Erreur lors du chargement des émotions')
-        }
-
-        const data = await response.json()
-        emotions.value = data
+        emotions.value = emotionsRes.data
+        entries.value = entriesRes.data
     } catch (error) {
-        console.error(error)
-        errorMessage.value = 'Accès refusé. Connectez-vous pour voir les émotions.'
+        console.error('Erreur chargement données :', error)
     }
 })
+
 
 
 const filteredEmotions = computed(() =>

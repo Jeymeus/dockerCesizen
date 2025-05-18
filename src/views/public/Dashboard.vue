@@ -18,9 +18,10 @@
           <router-link class="btn btn-outline-secondary" to="/emotions">
             😊 Explorer les émotions
           </router-link>
-          <router-link class="btn btn-outline-warning" to="/dashboard">
-            📊 Éditer mon tableau de bord
-          </router-link>
+          <button class="btn btn-outline-warning" @click="showReportModal = true">
+            📊 Générer un rapport émotionnel
+          </button>
+          <ReportModal v-if="showReportModal" @close="showReportModal = false" />
           <router-link v-if="requireAdmin" class="btn btn-outline-danger" to="/admin">
             🛠 Panneau d'administration
           </router-link>
@@ -32,7 +33,11 @@
 
 <script setup>
 import { useUserStore } from '../../stores/userStore'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import ReportModal from '@/components/common/ReportModal.vue'
+
+const showReportModal = ref(false)
+
 
 const store = useUserStore()
 const user = computed(() => store.user)
