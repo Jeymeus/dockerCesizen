@@ -1,99 +1,106 @@
-import { initDB, getDB } from '../database/init.js'
-import Page from '../models/Page.js'
+import db from '../database/db.js';
+import Page from '../models/Page.js';
 
 class PageRepository {
     async findAllVisible(menuId = null) {
-        await initDB()
-        const db = getDB()
+        try {
+            const query = menuId
+                ? 'SELECT * FROM pages WHERE visible = 1 AND menu_id = ? ORDER BY id'
+                : 'SELECT * FROM pages WHERE visible = 1 ORDER BY id';
 
-        const stmt = menuId
-            ? db.prepare('SELECT * FROM pages WHERE visible = 1 AND menu_id = ? ORDER BY id')
-            : db.prepare('SELECT * FROM pages WHERE visible = 1 ORDER BY id')
+            const [rows] = await db.execute(query, menuId ? [menuId] : []);
 
-        const rows = menuId ? stmt.all(menuId) : stmt.all()
-
-        return rows
-            .map(row => {
-                try {
-                    return new Page(row)
-                } catch (e) {
-                    console.error('[PageRepository] Erreur instanciation Page:', e.message)
-                    return null
-                }
-            })
-            .filter(p => p !== null)
+            return rows
+                .map(row => {
+                    try {
+                        return new Page(row);
+                    } catch (e) {
+                        console.error('[PageRepository] Erreur instanciation Page:', e.message);
+                        return null;
+                    }
+                })
+                .filter(p => p !== null);
+        } catch (err) {
+            console.error('[PageRepository] Erreur findAllVisible:', err.message);
+            return [];
+        }
     }
 
     async findById(id) {
-        await initDB()
-        const db = getDB()
-
-        const stmt = db.prepare('SELECT * FROM pages WHERE id = ?')
-        const row = stmt.get(id)
-
         try {
-            return row ? new Page(row) : null
+            const [rows] = await db.execute('SELECT * FROM pages WHERE id = ?', [id]);
+            const row = rows[0];
+            return row ? new Page(row) : null;
         } catch (e) {
-            console.error('[PageRepository] Données corrompues:', e.message)
-            return null
+            console.error('[PageRepository] Données corrompues:', e.message);
+            return null;
         }
     }
 
     async create(data) {
-        await initDB()
-        const db = getDB()
+        try {
+            const [result] = await db.execute(`
+        INSERT INTO pages (menu_id, title, url, content, visible)
+        VALUES (?, ?, ?, ?, ?)
+      `, [
+                data.menuId,
+                data.title,
+                data.url,
+                data.content,
+                data.visible
+            ]);
 
-        const stmt = db.prepare(`
-            INSERT INTO pages (menu_id, title, url, content, visible)
-            VALUES (?, ?, ?, ?, ?)
-        `)
-        const result = stmt.run(
-            data.menuId,
-            data.title,
-            data.url,
-            data.content,
-            data.visible
-        )
-        return this.findById(result.lastInsertRowid)
+            return this.findById(result.insertId);
+        } catch (err) {
+            console.error('[PageRepository] Erreur création:', err.message);
+            throw err;
+        }
     }
 
     async update(id, data) {
-        await initDB()
-        const db = getDB()
+        try {
+            await db.execute(`
+        UPDATE pages
+        SET menu_id = ?, title = ?, url = ?, content = ?, visible = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `, [
+                data.menuId,
+                data.title,
+                data.url,
+                data.content,
+                data.visible,
+                id
+            ]);
 
-        const stmt = db.prepare(`
-            UPDATE pages
-            SET menu_id = ?, title = ?, url = ?, content = ?, visible = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        `)
-        stmt.run(
-            data.menuId,
-            data.title,
-            data.url,
-            data.content,
-            data.visible,
-            id
-        )
-        return this.findById(id)
+            return this.findById(id);
+        } catch (err) {
+            console.error('[PageRepository] Erreur update:', err.message);
+            throw err;
+        }
     }
 
     async delete(id) {
-        await initDB()
-        const db = getDB()
-
-        const stmt = db.prepare('DELETE FROM pages WHERE id = ?')
-        const result = stmt.run(id)
-        return result.changes > 0
+        try {
+            const [result] = await db.execute('DELETE FROM pages WHERE id = ?', [id]);
+            return result.affectedRows > 0;
+        } catch (err) {
+            console.error('[PageRepository] Erreur delete:', err.message);
+            return false;
+        }
     }
 
     async findByMenuId(menuId) {
-        await initDB()
-        const db = getDB()
-        const stmt = db.prepare('SELECT * FROM pages WHERE menu_id = ? AND visible = 1')
-        const rows = stmt.all(menuId)
-        return rows.map(row => new Page(row))
+        try {
+            const [rows] = await db.execute(
+                'SELECT * FROM pages WHERE menu_id = ? AND visible = 1',
+                [menuId]
+            );
+            return rows.map(row => new Page(row));
+        } catch (err) {
+            console.error('[PageRepository] Erreur findByMenuId:', err.message);
+            return [];
+        }
     }
-      
 }
 
-export const pageRepository = new PageRepository()
+export const pageRepository = new PageRepository();

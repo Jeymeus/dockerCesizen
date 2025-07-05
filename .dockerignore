@@ -1,0 +1,14 @@
+# Dossiers à exclure
+node_modules
+dist
+.git
+.github
+
+# Fichiers inutiles
+Dockerfile
+docker-compose.yml
+.env.local
+.env.*.local
+npm-debug.log
+yarn.lock
+*.log

@@ -1,7 +1,7 @@
 import { userRepository } from '../repositories/UserRepository.js'
 import { verifyToken } from '../utils/jwt.js'
 import { sanitizeUserPayload } from '../utils/sanitize.js'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 
 
 /**

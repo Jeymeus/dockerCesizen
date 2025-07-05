@@ -1,58 +1,55 @@
-import { initDB, getDB } from '../database/init.js'
+import db from '../database/db.js';
 
 export default class BaseModel {
     constructor(tableName) {
-        if (!tableName) throw new Error('BaseModel must have a table name')
-        this.tableName = tableName
-        this.db = null
-    }
-
-    async _ready() {
-        await initDB()
-        this.db = getDB()
+        if (!tableName) throw new Error('BaseModel must have a table name');
+        this.tableName = tableName;
     }
 
     async findAll() {
-        await this._ready()
-        const stmt = this.db.prepare(`SELECT * FROM ${this.tableName}`)
-        return stmt.all()
+        const [rows] = await db.execute(`SELECT * FROM ${this.tableName}`);
+        return rows;
     }
 
     async findById(id) {
-        await this._ready()
-        const stmt = this.db.prepare(`SELECT * FROM ${this.tableName} WHERE id = ?`)
-        return stmt.get(id)
+        const [rows] = await db.execute(
+            `SELECT * FROM ${this.tableName} WHERE id = ?`,
+            [id]
+        );
+        return rows[0];
     }
 
     async create(data) {
-        await this._ready()
-        const keys = Object.keys(data)
-        const values = Object.values(data)
-        const placeholders = keys.map(() => '?').join(', ')
+        const keys = Object.keys(data);
+        const values = Object.values(data);
+        const placeholders = keys.map(() => '?').join(', ');
 
-        const stmt = this.db.prepare(
-            `INSERT INTO ${this.tableName} (${keys.join(', ')}) VALUES (${placeholders})`
-        )
-        const result = stmt.run(...values)
-        return this.findById(result.lastInsertRowid)
+        const [result] = await db.execute(
+            `INSERT INTO ${this.tableName} (${keys.join(', ')}) VALUES (${placeholders})`,
+            values
+        );
+
+        return this.findById(result.insertId);
     }
 
     async update(id, data) {
-        await this._ready()
-        const keys = Object.keys(data)
-        const values = Object.values(data)
-        const setters = keys.map(key => `${key} = ?`).join(', ')
-        const stmt = this.db.prepare(
-            `UPDATE ${this.tableName} SET ${setters}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
-        )
-        stmt.run(...values, id)
-        return this.findById(id)
+        const keys = Object.keys(data);
+        const values = Object.values(data);
+        const setters = keys.map(key => `${key} = ?`).join(', ');
+
+        await db.execute(
+            `UPDATE ${this.tableName} SET ${setters}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+            [...values, id]
+        );
+
+        return this.findById(id);
     }
 
     async delete(id) {
-        await this._ready()
-        const stmt = this.db.prepare(`DELETE FROM ${this.tableName} WHERE id = ?`)
-        const result = stmt.run(id)
-        return result.changes > 0
+        const [result] = await db.execute(
+            `DELETE FROM ${this.tableName} WHERE id = ?`,
+            [id]
+        );
+        return result.affectedRows > 0;
     }
 }

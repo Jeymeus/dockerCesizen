@@ -57,11 +57,6 @@
               </router-link>
             </p>
           </form>
-          <p class="text-muted small text-center mt-3">
-            Ce site est protégé par reCAPTCHA –
-            <a href="https://policies.google.com/privacy" target="_blank">Politique de confidentialité</a> et
-            <a href="https://policies.google.com/terms" target="_blank">Conditions d'utilisation</a> s'appliquent.
-          </p>
         </div>
       </div>
     </div>
@@ -73,8 +68,6 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../../services/api'
 import { useUserStore } from '../../stores/userStore'
-import { useReCaptcha } from 'vue-recaptcha-v3'
-
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -88,24 +81,15 @@ const password = ref('')
 const confirmPassword = ref('')
 const error = ref(null)
 const loading = ref(false)
-const { executeRecaptcha } = useReCaptcha()
 
 const handleLogin = async () => {
   loading.value = true
   error.value = null
   try {
 
-    const token = await executeRecaptcha('login')
-    if (!token) {
-      error.value = 'Échec de validation captcha'
-      loading.value = false
-      return
-    }
-
     const res = await api.post('/auth/login', {
       email: email.value,
-      password: password.value,
-      recaptchaToken: token
+      password: password.value
     })
 
     userStore.setUser({ user: res.data.user, token: res.data.token })
@@ -163,21 +147,12 @@ const handleRegister = async () => {
 
   // ✅ Si tout est OK → appel API
   try {
-    const token = await executeRecaptcha('register')
-    console.log('token reçu :', token)
-
-    if (!token) {
-      error.value = 'Échec de validation captcha'
-      loading.value = false
-      return
-    }
 
     const res = await api.post('/auth/register', {
       firstname: firstname.value,
       lastname: lastname.value,
       email: email.value,
-      password: password.value,
-      recaptchaToken: token
+      password: password.value
     })
 
     userStore.setUser(res.data)
@@ -213,7 +188,6 @@ const passwordLabel = computed(() => {
   if (passwordStrength.value < 100) return 'Bon'
   return 'Robuste'
 })
-
 
 </script>
 

@@ -1,0 +1,78 @@
+services:
+  # Base de données
+  mariadb:
+    image: mariadb:10.11
+    container_name: cesizen-mariadb
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpass}
+      MARIADB_DATABASE: ${DB_NAME:-cesizen}
+      MARIADB_USER: ${DB_USER:-cesi}
+      MARIADB_PASSWORD: ${DB_PASSWORD:-cesipass}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./api/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - cesizen-network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      start_interval: 10s
+      interval: 1m
+      timeout: 5s
+      retries: 3
+
+  # API Backend
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: cesizen-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      DB_HOST: mariadb
+      DB_USER: ${DB_USER:-cesi}
+      DB_PASSWORD: ${DB_PASSWORD:-cesipass}
+      DB_NAME: ${DB_NAME:-cesizen}
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - cesizen-network
+    volumes:
+      - ./api:/app/api
+      - /app/api/node_modules
+
+  # Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: cesizen-frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    networks:
+      - cesizen-network
+    volumes:
+      - ./src:/app/src
+      - /app/node_modules
+
+volumes:
+  mariadb_data:
+    driver: local
+
+networks:
+  cesizen-network:
+    driver: bridge

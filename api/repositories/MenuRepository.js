@@ -1,76 +1,76 @@
-import { initDB, getDB } from '../database/init.js'
-import Menu from '../models/Menu.js'
+import db from '../database/db.js';
+import Menu from '../models/Menu.js';
 
 class MenuRepository {
     async findAll() {
-        await initDB()
-        const db = getDB()
+        try {
+            const [rows] = await db.execute('SELECT * FROM menus');
 
-        const stmt = db.prepare('SELECT * FROM menus')
-        const rows = stmt.all()
-
-        return rows
-            .map(row => {
-                try {
-                    return new Menu(row)
-                } catch (e) {
-                    console.error('[MenuRepository] Erreur instanciation Menu:', e.message)
-                    return null
-                }
-            })
-            .filter(m => m !== null)
+            return rows
+                .map(row => {
+                    try {
+                        return new Menu(row);
+                    } catch (e) {
+                        console.error('[MenuRepository] Erreur instanciation Menu:', e.message);
+                        return null;
+                    }
+                })
+                .filter(m => m !== null);
+        } catch (err) {
+            console.error('[MenuRepository] Erreur findAll:', err.message);
+            return [];
+        }
     }
 
     async findById(id) {
-        await initDB()
-        const db = getDB()
-
-        const stmt = db.prepare('SELECT * FROM menus WHERE id = ?')
-        const row = stmt.get(id)
-
         try {
-            return row ? new Menu(row) : null
+            const [rows] = await db.execute('SELECT * FROM menus WHERE id = ?', [id]);
+            const row = rows[0];
+
+            return row ? new Menu(row) : null;
         } catch (e) {
-            console.error('[MenuRepository] Données corrompues:', e.message)
-            return null
+            console.error('[MenuRepository] Données corrompues:', e.message);
+            return null;
         }
     }
 
     async create(data) {
-        await initDB()
-        const db = getDB()
+        try {
+            const [result] = await db.execute(
+                `INSERT INTO menus (title, type) VALUES (?, ?)`,
+                [data.title, data.type || 'articles']
+            );
 
-        const stmt = db.prepare(`
-            INSERT INTO menus (title, type)
-            VALUES (?, ?)
-        `)
-        const result = stmt.run(data.title, data.type || 'articles')
-        return this.findById(result.lastInsertRowid)
+            return this.findById(result.insertId);
+        } catch (err) {
+            console.error('[MenuRepository] Erreur create:', err.message);
+            throw err;
+        }
     }
-    
 
     async update(id, data) {
-        await initDB()
-        const db = getDB()
+        try {
+            await db.execute(
+                `UPDATE menus SET title = ?, type = ? WHERE id = ?`,
+                [data.title, data.type, id]
+            );
 
-        const stmt = db.prepare(`
-          UPDATE menus
-          SET title = ?, type = ?
-          WHERE id = ?
-        `)
-        stmt.run(data.title, data.type, id)
-
-        return this.findById(id)
+            return this.findById(id);
+        } catch (err) {
+            console.error('[MenuRepository] Erreur update:', err.message);
+            throw err;
+        }
     }
 
     async delete(id) {
-        await initDB()
-        const db = getDB()
-
-        const stmt = db.prepare('DELETE FROM menus WHERE id = ?')
-        const result = stmt.run(id)
-        return result.changes > 0
+        try {
+            const [result] = await db.execute('DELETE FROM menus WHERE id = ?', [id]);
+            return result.affectedRows > 0;
+        } catch (err) {
+            console.error('[MenuRepository] Erreur delete:', err.message);
+            return false;
+        }
     }
 }
 
-export const menuRepository = new MenuRepository()
+export const menuRepository = new MenuRepository();
