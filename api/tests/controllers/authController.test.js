@@ -50,6 +50,7 @@ describe('AuthController - Unit Tests', () => {
         })
 
         it('should register a new user successfully', async () => {
+            console.log('test')
             // Arrange
             userRepository.findByEmail.mockResolvedValue(null)
             bcrypt.hash.mockResolvedValue('hashedPassword123')

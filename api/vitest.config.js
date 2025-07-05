@@ -4,7 +4,9 @@ export default defineConfig({
     test: {
         environment: 'node',
         globals: true,
-        setupFiles: ['./tests/setup/testConfig.js'],
+        setupFiles: ['./tests/setup/testTables.js'],
+        globalSetup: './tests/setup/globalSetup.js',
+        globalTeardown: './tests/setup/globalTeardown.js',
         coverage: {
             provider: 'v8',
             reporter: ['text', 'json', 'html'],
