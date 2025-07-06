@@ -80,3 +80,6 @@ beforeAll(async () => {
 
     console.log('✅ Tables de test créées')
 })
+
+
+export { cleanTestData } from './cleanTestData.js'

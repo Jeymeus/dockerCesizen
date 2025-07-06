@@ -71,7 +71,7 @@ export const updateUser = async (req, res) => {
         res.json(updated)
     } catch (err) {
         console.error(err)
-        res.status(400).json({ error: 'Erreur lors de la mise à jour de l’utilisateur' })
+        res.status(400).json({ error: 'Erreur lors de la mise à jour de l\'utilisateur' })
     }
 }
 
@@ -138,24 +138,24 @@ export const removeAccount = async (req, res) => {
 }
 
 /**
- * 👤 GET /users/me
+ * 👤 GET /users/me - Version optimisée
+ * Le middleware authenticateToken a déjà validé le token et mis l'user dans req.user
  */
 export const getUserProfile = async (req, res) => {
-    const token = req.headers.authorization?.split(' ')[1]
-
-    if (!token) {
-        return res.status(401).json({ error: 'Token manquant' })
-    }
-
     try {
-        const decoded = verifyToken(token)
-        const user = await userRepository.findById(decoded.id)
+        // Le middleware a déjà mis l'user décodé dans req.user
+        const user = await userRepository.findById(req.user.id)
 
-        if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' })
+        if (!user) {
+            return res.status(404).json({ error: 'Utilisateur non trouvé' })
+        }
 
-        res.json(user)
+        // ✅ Supprimer le mot de passe avant de renvoyer
+        const { password, ...userWithoutPassword } = user
+
+        res.json(userWithoutPassword)
     } catch (error) {
-        console.error(error)
-        res.status(401).json({ error: 'Token invalide' })
+        console.error('[getUserProfile] Erreur :', error.message)
+        res.status(500).json({ error: 'Erreur serveur' })
     }
 }

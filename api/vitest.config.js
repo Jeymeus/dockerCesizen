@@ -4,6 +4,10 @@ export default defineConfig({
     test: {
         environment: 'node',
         globals: true,
+        env: {
+            NODE_ENV: 'test',
+            VITEST: 'true'
+        },
         setupFiles: ['./tests/setup/testTables.js'],
         globalSetup: './tests/setup/globalSetup.js',
         globalTeardown: './tests/setup/globalTeardown.js',
