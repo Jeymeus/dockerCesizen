@@ -17,6 +17,7 @@ export const cleanTestData = async () => {
     await db.execute('DELETE FROM pages')
     await db.execute('DELETE FROM users')
     await db.execute('DELETE FROM menus')
+    await db.execute('DELETE FROM emotions')
 
     await db.end()
 }
