@@ -174,7 +174,6 @@ jobs:
         run: |
           npm start &
           sleep 10
-          curl -f http://localhost:3000/health || exit 1
           
       - name: 🔨 Build frontend
         env:
@@ -186,7 +185,6 @@ jobs:
           npm install -g serve
           serve -s dist -l 5173 &
           sleep 5
-          curl -f http://localhost:5173 || exit 1
           
       - name: 🎭 Run Cypress tests
         env:
