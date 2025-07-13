@@ -1,0 +1,26 @@
+{
+    "validUser": {
+        "id": 1,
+        "firstname": "Test",
+        "lastname": "User",
+        "email": "test@cesizen.com",
+        "role": "user"
+    },
+    "adminUser": {
+        "id": 2,
+        "firstname": "Admin",
+        "lastname": "User",
+        "email": "admin@cesizen.com",
+        "role": "admin"
+    },
+    "authResponse": {
+        "user": {
+            "id": 1,
+            "firstname": "Test",
+            "lastname": "User",
+            "email": "test@cesizen.com",
+            "role": "user"
+        },
+        "token": "fake-jwt-token-for-testing"
+    }
+}

@@ -81,7 +81,7 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: ${NODE_ENV:-production}
-      VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3000/api}
     ports:
       - "5173:5173"
     depends_on:
@@ -92,10 +92,48 @@ services:
       - ./src:/app/src
       - /app/node_modules
 
+  # Tests Cypress
+  cypress:
+    build:
+      context: .
+      dockerfile: Dockerfile.cypress
+    container_name: cesizen-cypress
+    environment:
+      CYPRESS_baseUrl: http://frontend:5173
+      CYPRESS_API_URL: http://api:3000/api
+      CYPRESS_TEST_USER_EMAIL: test@cesizen.com
+      CYPRESS_TEST_USER_PASSWORD: TestPassword123!
+      CYPRESS_TEST_ADMIN_EMAIL: admin@cesizen.com
+      CYPRESS_TEST_ADMIN_PASSWORD: AdminPassword123!
+      # Ajout pour les tests headless dans Docker
+      CYPRESS_CACHE_FOLDER: /root/.cache/Cypress
+    depends_on:
+      - frontend
+      - api
+    networks:
+      - cesizen-network
+    volumes:
+      - ./cypress:/app/cypress
+      - ./cypress.config.js:/app/cypress.config.js
+      - ./package.json:/app/package.json
+      - cypress_videos:/app/cypress/videos
+      - cypress_screenshots:/app/cypress/screenshots
+      # Cache Cypress pour éviter de re-télécharger
+      - cypress_cache:/root/.cache/Cypress
+    profiles:
+      - testing
+
 volumes:
   mariadb_data:
     driver: local
   mariadb_test_data:
+    driver: local
+  # ✅ Ajout des volumes manquants pour Cypress
+  cypress_videos:
+    driver: local
+  cypress_screenshots:
+    driver: local
+  cypress_cache:
     driver: local
 
 networks:
