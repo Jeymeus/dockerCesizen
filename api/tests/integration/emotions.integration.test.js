@@ -1,16 +1,28 @@
 // api/tests/integration/emotions.integration.test.js
 import { describe, it, expect, beforeEach } from 'vitest'
 import request from 'supertest'
-import app from '../server.js'
-import db from '../database/db.js'
+import express from 'express'
+import cors from 'cors'
+import authRoutes from '../../routes/authRoutes.js'
+import emotionRoutes from '../../routes/emotionRoutes.js'
+import { cleanTestData } from '../setup/cleanTestData.js'
+
+// Création de l'app de test
+const createTestApp = () => {
+    const app = express()
+    app.use(cors())
+    app.use(express.json())
+    app.use('/api/auth', authRoutes)
+    app.use('/api/emotions', emotionRoutes)
+    return app
+}
 
 describe('Emotions API Integration Tests', () => {
-    let adminToken, userToken
+    let adminToken, userToken, app
 
     beforeEach(async () => {
-        // Clean database
-        await db.execute('DELETE FROM emotions')
-        await db.execute('DELETE FROM users')
+        app = createTestApp()
+        await cleanTestData()
 
         // Create admin user
         const adminResponse = await request(app)
@@ -43,7 +55,7 @@ describe('Emotions API Integration Tests', () => {
                 .post('/api/emotions')
                 .set('Authorization', `Bearer ${adminToken}`)
                 .send({
-                    label: 'Joie',
+                    label: 'TestJoie', // ✅ Nom unique pour éviter les conflits
                     category: 'Positive',
                     emoji: '😊'
                 })
@@ -55,9 +67,9 @@ describe('Emotions API Integration Tests', () => {
 
             // Assert
             expect(response.status).toBe(200)
-            expect(response.body).toHaveLength(1)
+            expect(response.body).toHaveLength(1) // ✅ Maintenant correct car DB vide
             expect(response.body[0]).toMatchObject({
-                label: 'Joie',
+                label: 'TestJoie',
                 category: 'Positive',
                 emoji: '😊'
             })
@@ -77,14 +89,14 @@ describe('Emotions API Integration Tests', () => {
                 .post('/api/emotions')
                 .set('Authorization', `Bearer ${adminToken}`)
                 .send({
-                    label: 'Tristesse',
+                    label: 'TestTristesse', // ✅ Nom unique
                     category: 'Negative',
                     emoji: '😢'
                 })
 
             expect(response.status).toBe(201)
             expect(response.body).toMatchObject({
-                label: 'Tristesse',
+                label: 'TestTristesse',
                 category: 'Negative',
                 emoji: '😢'
             })
@@ -95,7 +107,7 @@ describe('Emotions API Integration Tests', () => {
                 .post('/api/emotions')
                 .set('Authorization', `Bearer ${userToken}`)
                 .send({
-                    label: 'Tristesse',
+                    label: 'TestTristesse',
                     category: 'Negative',
                     emoji: '😢'
                 })
@@ -111,7 +123,7 @@ describe('Emotions API Integration Tests', () => {
                 .post('/api/emotions')
                 .set('Authorization', `Bearer ${adminToken}`)
                 .send({
-                    label: 'Joie',
+                    label: 'TestJoie', // ✅ Nom unique
                     category: 'Positive',
                     emoji: '😊'
                 })
@@ -123,14 +135,14 @@ describe('Emotions API Integration Tests', () => {
                 .put(`/api/emotions/${emotionId}`)
                 .set('Authorization', `Bearer ${adminToken}`)
                 .send({
-                    label: 'Bonheur',
+                    label: 'TestBonheur', // ✅ Nom unique pour l'update
                     category: 'Positive',
                     emoji: '😄'
                 })
 
             expect(response.status).toBe(200)
             expect(response.body).toMatchObject({
-                label: 'Bonheur',
+                label: 'TestBonheur',
                 category: 'Positive',
                 emoji: '😄'
             })
@@ -144,7 +156,7 @@ describe('Emotions API Integration Tests', () => {
                 .post('/api/emotions')
                 .set('Authorization', `Bearer ${adminToken}`)
                 .send({
-                    label: 'Joie',
+                    label: 'TestJoieToDelete', // ✅ Nom unique
                     category: 'Positive',
                     emoji: '😊'
                 })

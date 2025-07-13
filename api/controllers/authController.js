@@ -5,33 +5,48 @@ import db from '../database/db.js';
 
 // 🆕 POST /auth/register
 export const register = async (req, res) => {
-    const { firstname, lastname, email, password } = req.body
-
-    if (!firstname || !lastname || !email || !password) {
-        return res.status(400).json({ error: 'Tous les champs sont requis' })
-    }
-
-    const existing = await userRepository.findByEmail(email)
-    if (existing) {
-        return res.status(409).json({ error: 'Email déjà utilisé' })
-    }
-
     try {
-        const hashed = await bcrypt.hash(password, 10)
+        const { firstname, lastname, email, password, role } = req.body
 
+        // ✅ Ajoutez ça AVANT le hashage
+        if (!firstname || !lastname || !email || !password) {
+            return res.status(400).json({
+                error: 'Tous les champs sont requis (firstname, lastname, email, password)'
+            })
+        }
+
+        // ✅ CORRECTION 1 : Hacher le mot de passe AVANT de l'utiliser
+        const hashedPassword = await bcrypt.hash(password, 10)
+
+        // Validation et création utilisateur...
         const user = await userRepository.create({
             firstname,
             lastname,
             email,
-            password: hashed,
-            role: req.body.role ?? 'user'
+            password: hashedPassword, // ✅ Maintenant défini !
+            role: role || 'user'
         })
 
-        const token = generateToken({ id: user.id, role: user.role })
-        res.status(201).json({ token, user })
+        // Générer le token
+        const token = generateToken({ id: user.id, email: user.email, role: user.role })
+
+        // ✅ CORRECTION 2 : Supprimer le password avant de renvoyer
+        const { password: userPassword, ...userWithoutPassword } = user
+
+        res.status(201).json({
+            token,
+            user: userWithoutPassword  // ✅ Sans le password
+        })
+
     } catch (error) {
+        // Gestion erreurs...
         console.error('[register] Erreur :', error.message)
-        res.status(400).json({ error: error.message })
+
+        if (error.message.includes('Duplicate entry')) {
+            return res.status(409).json({ error: 'Email déjà utilisé' })
+        }
+
+        res.status(500).json({ error: 'Erreur serveur' })
     }
 }
 
@@ -39,14 +54,23 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
     const { email, password } = req.body
 
-    const user = await userRepository.findByEmail(email)
-    if (!user) return res.status(401).json({ error: 'Email ou mot de passe invalide' })
+    try {
+        const user = await userRepository.findByEmail(email)
+        if (!user) return res.status(401).json({ error: 'Email ou mot de passe invalide' })
 
-    const valid = await bcrypt.compare(password, user.password)
-    if (!valid) return res.status(401).json({ error: 'Email ou mot de passe invalide' })
+        const valid = await bcrypt.compare(password, user.password)
+        if (!valid) return res.status(401).json({ error: 'Email ou mot de passe invalide' })
 
-    const token = generateToken({ id: user.id, role: user.role })
-    res.json({ token, user })
+        const token = generateToken({ id: user.id, role: user.role })
+
+        // ✅ CORRECTION 3 : Supprimer le password du login aussi
+        const { password: userPassword, ...userWithoutPassword } = user
+
+        res.json({ token, user: userWithoutPassword })
+    } catch (error) {
+        console.error('[login] Erreur :', error.message)
+        res.status(500).json({ error: 'Erreur serveur' })
+    }
 }
 
 // ✏️ PATCH /auth/reset-password

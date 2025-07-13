@@ -1,17 +1,30 @@
 // api/tests/integration/pages.integration.test.js
 import { describe, it, expect, beforeEach } from 'vitest'
 import request from 'supertest'
-import app from '../server.js'
-import db from '../database/db.js'
+import express from 'express'
+import cors from 'cors'
+import authRoutes from '../../routes/authRoutes.js'
+import pageRoutes from '../../routes/pageRoutes.js'
+import menuRoutes from '../../routes/menuRoutes.js'
+import { cleanTestData } from '../setup/cleanTestData.js'
+
+// Création de l'app de test
+const createTestApp = () => {
+    const app = express()
+    app.use(cors())
+    app.use(express.json())
+    app.use('/api/auth', authRoutes)
+    app.use('/api/pages', pageRoutes)
+    app.use('/api/menus', menuRoutes)
+    return app
+}
 
 describe('Pages API Integration Tests', () => {
-    let adminToken, userToken, menuId
+    let adminToken, userToken, menuId, app
 
     beforeEach(async () => {
-        // Clean database
-        await db.execute('DELETE FROM pages')
-        await db.execute('DELETE FROM menus')
-        await db.execute('DELETE FROM users')
+        app = createTestApp()
+        await cleanTestData()
 
         // Create admin user
         const adminResponse = await request(app)

@@ -22,7 +22,7 @@ export function sanitizeUserPayload(body) {
 
 export function sanitizeMenuPayload(body) {
     return {
-        title: body.title ?? ''
+        title: body.title ?? '',
     }
 }
 

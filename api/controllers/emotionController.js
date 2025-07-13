@@ -23,7 +23,7 @@ export const getEmotionById = async (req, res) => {
         res.json(emotion)
     } catch (error) {
         console.error(error)
-        res.status(500).json({ error: 'Erreur lors de la récupération de l’émotion' })
+        res.status(500).json({ error: 'Erreur lors de la récupération de l\'émotion' })
     }
 }
 
@@ -37,7 +37,7 @@ export const createEmotion = async (req, res) => {
         res.status(201).json(emotion)
     } catch (error) {
         console.error(error)
-        res.status(400).json({ error: 'Erreur lors de la création de l’émotion' })
+        res.status(400).json({ error: 'Erreur lors de la création de l\'émotion' })
     }
 }
 
@@ -51,7 +51,7 @@ export const updateEmotion = async (req, res) => {
         res.json(emotion)
     } catch (error) {
         console.error(error)
-        res.status(400).json({ error: 'Erreur lors de la mise à jour de l’émotion' })
+        res.status(400).json({ error: 'Erreur lors de la mise à jour de l\'émotion' })
     }
 }
 
@@ -65,6 +65,6 @@ export const deleteEmotion = async (req, res) => {
         res.status(204).send()
     } catch (error) {
         console.error(error)
-        res.status(500).json({ error: 'Erreur lors de la suppression de l’émotion' })
+        res.status(500).json({ error: 'Erreur lors de la suppression de l\'émotion' })
     }
 }
