@@ -1,0 +1,32 @@
+[
+    {
+        "id": 1,
+        "emoji": "😊",
+        "label": "Joie",
+        "category": "Joie"
+    },
+    {
+        "id": 2,
+        "emoji": "😢",
+        "label": "Tristesse",
+        "category": "Tristesse"
+    },
+    {
+        "id": 3,
+        "emoji": "😡",
+        "label": "Colère",
+        "category": "Colère"
+    },
+    {
+        "id": 4,
+        "emoji": "😴",
+        "label": "Fatigue",
+        "category": "Calme"
+    },
+    {
+        "id": 5,
+        "emoji": "😰",
+        "label": "Stress",
+        "category": "Anxiété"
+    }
+]
