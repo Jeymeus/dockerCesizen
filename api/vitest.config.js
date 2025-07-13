@@ -11,6 +11,14 @@ export default defineConfig({
         setupFiles: ['./tests/setup/testTables.js'],
         globalSetup: './tests/setup/globalSetup.js',
         globalTeardown: './tests/setup/globalTeardown.js',
+        // ✅ CORRECTION: Forcer l'exécution séquentielle
+        pool: 'forks',
+        poolOptions: {
+            forks: {
+                singleFork: true  // Un test à la fois
+            }
+        },
+        testTimeout: 15000,  // Timeout plus long
         coverage: {
             provider: 'v8',
             reporter: ['text', 'json', 'html'],
