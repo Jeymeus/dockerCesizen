@@ -96,7 +96,7 @@ jobs:
         with:
           name: coverage-reports
           path: api/coverage/
-          retention-days: 30
+          retention-days: 3
 
   # 1-2 Tests E2E avec Cypress
   tests-e2e:
