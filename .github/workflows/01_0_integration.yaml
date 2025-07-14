@@ -27,7 +27,7 @@ jobs:
   # ✅ Integration Summary
   Integration_Summary:
     runs-on: ubuntu-latest
-    needs: [Test_Back_Front, Quality_Gate]  # ← Retiré Security_Scan
+    needs: [Test_Back_Front, Quality_Gate]
     if: always()
     
     steps:
