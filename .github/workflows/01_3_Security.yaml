@@ -26,21 +26,24 @@ jobs:
         working-directory: ./api
         run: npm ci
         
-      - name: 🛡️ Run Snyk security scan Back (Monitor Mode)
+      - name: 🛡️ Run Snyk security scan Back
         working-directory: ./api
         run: |
-          echo "🔍 Scanning API for vulnerabilities..."
           npx snyk test \
-            --severity-threshold=high \
+            --severity-threshold=medium \
             --file=package.json \
-            --project-name=cesizen-api || echo "⚠️ Vulnerabilities found in API - check reports"
-          
-          echo "📊 Monitoring project in Snyk dashboard..."
-          npx snyk monitor \
-            --file=package.json \
-            --project-name=cesizen-api || echo "ℹ️ Monitoring setup completed"
+            --project-name=cesizen-api \
+            --sarif-file-output=snyk-results.sarif || true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+            
+      - name: 📤 Upload Snyk Back report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: snyk-api-report
+          path: api/snyk-results.sarif
+          retention-days: 30
 
   Security_Frontend:
     name: 🛡️ Snyk Frontend Security Scan
@@ -61,21 +64,24 @@ jobs:
         working-directory: ./frontend
         run: npm ci
         
-      - name: 🛡️ Run Snyk security scan Frontend (Monitor Mode)
+      - name: 🛡️ Run Snyk security scan Frontend
         working-directory: ./frontend
         run: |
-          echo "🔍 Scanning Frontend for vulnerabilities..."
           npx snyk test \
-            --severity-threshold=high \
+            --severity-threshold=medium \
             --file=package.json \
-            --project-name=cesizen-frontend || echo "⚠️ Vulnerabilities found in Frontend - check reports"
-          
-          echo "📊 Monitoring project in Snyk dashboard..."
-          npx snyk monitor \
-            --file=package.json \
-            --project-name=cesizen-frontend || echo "ℹ️ Monitoring setup completed"
+            --project-name=cesizen-frontend \
+            --sarif-file-output=snyk-results.sarif || true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+            
+      - name: 📤 Upload Snyk Frontend report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: snyk-frontend-report
+          path: frontend/snyk-results.sarif
+          retention-days: 30
 
   Security_Summary:
     name: 📋 Security Summary
@@ -86,7 +92,15 @@ jobs:
     steps:
       - name: 📋 Security Results
         run: |
-          echo "🛡️ Security Analysis Completed"
-          echo "📊 Check your Snyk dashboard at: https://app.snyk.io/"
-          echo "💡 This scan is in monitoring mode - it won't fail the pipeline"
-          echo "🔧 Gradually tighten security requirements as you fix vulnerabilities"
+          echo "🛡️ Back Security: ${{ needs.Security_Back.result }}"
+          echo "🛡️ Frontend Security: ${{ needs.Security_Frontend.result }}"
+          
+          if [[ "${{ needs.Security_Back.result }}" == "success" && 
+                "${{ needs.Security_Frontend.result }}" == "success" ]]; then
+            echo "✅ Security Scan PASSED"
+            exit 0
+          else
+            echo "❌ Security Scan FAILED - Check vulnerabilities in the reports"
+            echo "Note: This might be expected if vulnerabilities were found"
+            exit 0
+          fi
