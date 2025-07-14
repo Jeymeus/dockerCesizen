@@ -33,7 +33,7 @@ jobs:
             --severity-threshold=medium \
             --file=package.json \
             --project-name=cesizen-api \
-            --sarif-file-output=snyk-results.sarif || true
+            --sarif-file-output=snyk-results.sarif
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
             
@@ -71,7 +71,7 @@ jobs:
             --severity-threshold=medium \
             --file=package.json \
             --project-name=cesizen-frontend \
-            --sarif-file-output=snyk-results.sarif || true
+            --sarif-file-output=snyk-results.sarif
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
             
