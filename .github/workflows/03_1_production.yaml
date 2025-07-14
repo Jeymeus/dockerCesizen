@@ -122,7 +122,6 @@ jobs:
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             PORT=3000
             VITE_API_URL=http://${{ secrets.PRODUCTION_HOST }}:3000/api
-            GITHUB_REPOSITORY=${{ github.repository }}
             EOF
             
             # Rolling deployment
