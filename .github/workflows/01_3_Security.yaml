@@ -57,6 +57,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
           
       - name: 📦 Install frontend dependencies
         working-directory: ./frontend
@@ -78,7 +79,7 @@ jobs:
         with:
           name: snyk-frontend-report
           path: snyk.sarif
-          retention-days: 3
+          retention-days: 30
 
   Security_Summary:
     name: 📋 Security Summary
