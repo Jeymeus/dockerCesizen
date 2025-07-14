@@ -213,5 +213,5 @@ jobs:
         if: failure()
         with:
           name: cypress-screenshots
-          path: frontendcypress/screenshots/
+          path: frontend/cypress/screenshots/
           retention-days: 30
