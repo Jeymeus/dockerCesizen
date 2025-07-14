@@ -45,7 +45,7 @@ jobs:
             sudo chown ${{ secrets.CANARY_USERNAME }}:${{ secrets.CANARY_USERNAME }} /opt/cesizen
             
             # Login to GitHub Container Registry
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            echo ${{ secrets.DCKCESIZEN_PAT }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
             # Pull latest images
             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-api:canary
