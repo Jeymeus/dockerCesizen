@@ -3,7 +3,7 @@ name: 01_0_Integration Pipeline
 on:
   pull_request:
     branches:
-      - master
+      - develop
     types: [opened, synchronize, reopened]
 
 jobs:
