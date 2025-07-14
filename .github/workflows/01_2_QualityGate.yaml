@@ -3,9 +3,6 @@ name: 01_2_Quality Gate
 on:
   workflow_call
 
-env:
-  NODE_VERSION: '20'
-
 jobs:
   Quality_Backend:
     name: 🔍 SonarQube Backend Analysis
@@ -17,26 +14,18 @@ jobs:
         with:
           fetch-depth: 0
           
-      - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: 'api/package-lock.json'
-          
       - name: 📥 Download coverage reports
         uses: actions/download-artifact@v4
         with:
           name: coverage-reports
           path: api/coverage/
           
-      - name: 🔍 SonarQube Scan Backend
-        uses: sonarqube-quality-gate-action@master
+      - name: 🔍 SonarCloud Backend
+        uses: SonarSource/sonarcloud-github-action@v3.1.0
         with:
-          scanMetadataReportFile: api/.scannerwork/report-task.txt
+          projectBaseDir: ./api
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACKEND }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
   Quality_Frontend:
     name: 🔍 SonarQube Frontend Analysis
@@ -48,42 +37,9 @@ jobs:
         with:
           fetch-depth: 0
           
-      - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v4
+      - name: 🔍 SonarCloud Frontend
+        uses: SonarSource/sonarcloud-github-action@v3.1.0
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: 'frontend/package-lock.json'
-          
-      - name: 📦 Install frontend dependencies
-        working-directory: ./frontend
-        run: npm ci
-          
-      - name: 🔍 SonarQube Scan Frontend
-        uses: sonarqube-quality-gate-action@master
-        with:
-          scanMetadataReportFile: frontend/.scannerwork/report-task.txt
+          projectBaseDir: ./frontend
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_FRONTEND }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-
-  Quality_Summary:
-    name: 📋 Quality Gate Summary
-    runs-on: ubuntu-latest
-    needs: [Quality_Backend, Quality_Frontend]
-    if: always()
-    
-    steps:
-      - name: 📋 Quality Results
-        run: |
-          echo "🔍 Backend Quality: ${{ needs.Quality_Backend.result }}"
-          echo "🔍 Frontend Quality: ${{ needs.Quality_Frontend.result }}"
-          
-          if [[ "${{ needs.Quality_Backend.result }}" == "success" && 
-                "${{ needs.Quality_Frontend.result }}" == "success" ]]; then
-            echo "✅ Quality Gate PASSED"
-            exit 0
-          else
-            echo "❌ Quality Gate FAILED"
-            exit 1
-          fi
