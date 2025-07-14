@@ -82,25 +82,3 @@ jobs:
           name: snyk-frontend-report
           path: frontend/snyk-results.sarif
           retention-days: 30
-
-  Security_Summary:
-    name: 📋 Security Summary
-    runs-on: ubuntu-latest
-    needs: [Security_Back, Security_Frontend]
-    if: always()
-    
-    steps:
-      - name: 📋 Security Results
-        run: |
-          echo "🛡️ Back Security: ${{ needs.Security_Back.result }}"
-          echo "🛡️ Frontend Security: ${{ needs.Security_Frontend.result }}"
-          
-          if [[ "${{ needs.Security_Back.result }}" == "success" && 
-                "${{ needs.Security_Frontend.result }}" == "success" ]]; then
-            echo "✅ Security Scan PASSED"
-            exit 0
-          else
-            echo "❌ Security Scan FAILED - Check vulnerabilities in the reports"
-            echo "Note: This might be expected if vulnerabilities were found"
-            exit 0
-          fi
