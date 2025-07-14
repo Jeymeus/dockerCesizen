@@ -26,7 +26,7 @@ services:
 
   # API Backend
   api:
-    image: ghcr.io/${GITHUB_REPOSITORY,,}-api:latest
+    image: ghcr.io/jeymeus/dockercesizen-api:latest
     container_name: cesizen-api-prod
     restart: unless-stopped
     environment:
@@ -53,7 +53,7 @@ services:
 
   # Frontend
   frontend:
-    image: ghcr.io/${GITHUB_REPOSITORY,,}-frontend:latest
+    image: ghcr.io/jeymeus/dockercesizen-frontend:latest
     container_name: cesizen-frontend-prod
     restart: unless-stopped
     environment:
