@@ -89,7 +89,7 @@ services:
     networks:
       - cesizen-network
     volumes:
-      - ./src:/app/src
+      - ./frontendsrc:/app/src
       - /app/node_modules
 
   # Tests Cypress
@@ -113,9 +113,9 @@ services:
     networks:
       - cesizen-network
     volumes:
-      - ./cypress:/app/cypress
-      - ./cypress.config.js:/app/cypress.config.js
-      - ./package.json:/app/package.json
+      - ./frontend/cypress:/app/cypress
+      - ./frontend/cypress.config.js:/app/cypress.config.js
+      - ./frontend/package.json:/app/package.json
       - cypress_videos:/app/cypress/videos
       - cypress_screenshots:/app/cypress/screenshots
       # Cache Cypress pour éviter de re-télécharger
