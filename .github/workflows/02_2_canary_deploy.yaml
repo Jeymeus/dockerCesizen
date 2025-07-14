@@ -1,0 +1,112 @@
+name: 02_2_Canary Deploy & Test
+
+on:
+  pull_request:
+    branches: [release]
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  Deploy_Canary:
+    name: 🚀 Deploy to Canary
+    runs-on: ubuntu-latest
+    environment: canary
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 📝 Downcase Image Name
+        run: echo "IMAGE_NAME_LOWER=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
+
+      - name: 📤 Upload Docker Compose
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.CANARY_HOST }}
+          port: 22
+          username: ${{ secrets.CANARY_USERNAME }}
+          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          source: "./docker-compose.canary.yml,./api/database/init.sql"
+          target: "/opt/cesizen/"
+
+      - name: 🚀 Deploy Application
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.CANARY_HOST }}
+          port: 22
+          username: ${{ secrets.CANARY_USERNAME }}
+          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/cesizen
+            
+            # Create directory if needed
+            sudo mkdir -p /opt/cesizen
+            sudo chown ${{ secrets.CANARY_USERNAME }}:${{ secrets.CANARY_USERNAME }} /opt/cesizen
+            
+            # Login to GitHub Container Registry
+            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # Pull latest images
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-api:canary
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-frontend:canary
+            
+            # Create environment file
+            cat > .env << EOF
+            NODE_ENV=production
+            DB_HOST=mariadb
+            DB_USER=cesi
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            DB_NAME=cesizen
+            DB_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            PORT=3000
+            VITE_API_URL=http://${{ secrets.CANARY_HOST }}:3000/api
+            GITHUB_REPOSITORY=${{ github.repository }}
+            EOF
+            
+            # Deploy
+            docker compose -f docker-compose.canary.yml down --remove-orphans || true
+            docker compose -f docker-compose.canary.yml up -d
+            
+            # Wait and health check
+            sleep 30
+            curl -f http://localhost:3000/ || exit 1
+            curl -f http://localhost:5173/ || exit 1
+            
+            echo "✅ Canary deployment successful!"
+
+  ZAP_Security_Scan:
+    name: 🛡️ ZAP Security Test
+    needs: [Deploy_Canary]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: ⏳ Wait for Application
+        run: |
+          for i in {1..20}; do
+            if curl -f "http://${{ secrets.CANARY_HOST }}:5173/" > /dev/null 2>&1; then
+              echo "✅ Application ready!"
+              break
+            fi
+            echo "Attempt $i/20: Waiting..."
+            sleep 15
+          done
+
+      - name: 🛡️ ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'http://${{ secrets.CANARY_HOST }}:5173'
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a'
+
+      - name: 📤 Upload ZAP Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-canary-report
+          path: report_html.html
+          retention-days: 30
