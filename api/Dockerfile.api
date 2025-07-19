@@ -1,4 +1,3 @@
-# Dockerfile.api - SEULEMENT l'API
 FROM node:20-alpine
 
 # Installer les dépendances nécessaires pour bcrypt
@@ -6,15 +5,15 @@ RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
-# Copier SEULEMENT les dépendances API
-COPY api/package*.json ./
+# Copier les dépendances
+COPY package*.json ./
 RUN npm ci --only=production
 
-# Copier SEULEMENT le code API
-COPY api/ ./
+# Copier le code (depuis le contexte api/)
+COPY . ./
 
 # Exposer le port
 EXPOSE 3000
 
-# Démarrer SEULEMENT l'API
+# Démarrer l'API
 CMD ["node", "server.js"]
