@@ -5,3 +5,5 @@ dist/
 .env
 *.db
 .vscode/*
+backend/coverage/
+frontend/coverage/
