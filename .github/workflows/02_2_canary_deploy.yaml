@@ -86,14 +86,21 @@ jobs:
 
       - name: ⏳ Wait for Application
         run: |
+          echo "🔍 Waiting for application to be ready..."
           for i in {1..20}; do
             if curl -f "http://${{ secrets.CANARY_HOST }}:5173/" > /dev/null 2>&1; then
-              echo "✅ Application ready!"
+              echo "✅ Application ready after $i attempts!"
               break
             fi
-            echo "Attempt $i/20: Waiting..."
+            echo "⏳ Attempt $i/20: Application not ready, waiting 15s..."
             sleep 15
           done
+          
+          # Test final pour être sûr
+          if ! curl -f "http://${{ secrets.CANARY_HOST }}:5173/" > /dev/null 2>&1; then
+            echo "❌ Application still not ready after 5 minutes"
+            exit 1
+          fi
 
       - name: 🛡️ ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.12.0
@@ -107,6 +114,20 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: zap-canary-report
-          path: report_html.html
+          name: zap-security-report-${{ github.run_id }}
+          path: |
+            report_html.html
+            report_json.json
+            report_md.md
           retention-days: 30
+          if-no-files-found: warn
+
+      - name: 📋 Display ZAP Summary
+        if: always()
+        run: |
+          if [ -f "report_json.json" ]; then
+            echo "🛡️ ZAP Scan completed!"
+            echo "📊 Check the uploaded artifacts for detailed reports"
+          else
+            echo "⚠️ No ZAP reports found"
+          fi
