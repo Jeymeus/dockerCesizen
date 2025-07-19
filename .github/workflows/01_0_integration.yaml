@@ -1,10 +1,10 @@
 name: 01_0_Integration Pipeline
 
 on:
-  pull_request:
+  push:
     branches:
       - master
-    types: [opened, synchronize, reopened]
+    # types: [opened, synchronize, reopened]
 
 jobs:
   # 1-1 Tests Back & Front avec Vitest et Cypress
