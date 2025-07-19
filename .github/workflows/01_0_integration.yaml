@@ -3,7 +3,7 @@ name: 01_0_Integration Pipeline
 on:
   pull_request:
     branches:
-      - toto
+      - develop
     types: [opened, synchronize, reopened]
 
 jobs:
@@ -19,30 +19,30 @@ jobs:
     secrets: inherit
 
   # 1-3 Security Scan avec Snyk
-  # Security_Scan:
-  #   needs: [Test_Back_Front]
-  #   uses: ./.github/workflows/01_3_Security.yaml
-  #   secrets: inherit
+  Security_Scan:
+    needs: [Test_Back_Front]
+    uses: ./.github/workflows/01_3_Security.yaml
+    secrets: inherit
 
-  # # ✅ Integration Summary
-  # Integration_Summary:
-  #   runs-on: ubuntu-latest
-  #   needs: [Test_Back_Front, Quality_Gate, Security_Scan]
-  #   if: always()
+  # ✅ Integration Summary
+  Integration_Summary:
+    runs-on: ubuntu-latest
+    needs: [Test_Back_Front, Quality_Gate, Security_Scan]
+    if: always()
     
-  #   steps:
-  #     - name: 📋 Integration Results
-  #       run: |
-  #         echo "🧪 Back&Front Tests: ${{ needs.Test_Back_Front.result }}"
-  #         echo "🔍 Quality Gate: ${{ needs.Quality_Gate.result }}"
-  #         echo "🛡️ Security Scan: ${{ needs.Security_Scan.result }}"
+    steps:
+      - name: 📋 Integration Results
+        run: |
+          echo "🧪 Back&Front Tests: ${{ needs.Test_Back_Front.result }}"
+          echo "🔍 Quality Gate: ${{ needs.Quality_Gate.result }}"
+          echo "🛡️ Security Scan: ${{ needs.Security_Scan.result }}"
           
-  #         if [[ "${{ needs.Test_Back_Front.result }}" == "success" && 
-  #               "${{ needs.Quality_Gate.result }}" == "success" &&
-  #               "${{ needs.Security_Scan.result }}" == "success" ]]; then
-  #           echo "✅ Integration pipeline PASSED - Ready for develop merge!"
-  #           exit 0
-  #         else
-  #           echo "❌ Integration pipeline FAILED - Check the logs above"
-  #           exit 1
-  #         fi
+          if [[ "${{ needs.Test_Back_Front.result }}" == "success" && 
+                "${{ needs.Quality_Gate.result }}" == "success" &&
+                "${{ needs.Security_Scan.result }}" == "success" ]]; then
+            echo "✅ Integration pipeline PASSED - Ready for develop merge!"
+            exit 0
+          else
+            echo "❌ Integration pipeline FAILED - Check the logs above"
+            exit 1
+          fi
