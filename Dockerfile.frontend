@@ -8,10 +8,10 @@ COPY package*.json ./
 RUN npm ci
 
 # Copier SEULEMENT le code frontend
-COPY src/ ./src/
-COPY public/ ./public/
-COPY index.html ./
-COPY vite.config.js ./
+COPY frontend/src/ ./src/
+COPY frontend/public/ ./public/
+COPY frontend/index.html ./
+COPY frontend/vite.config.js ./
 
 # Build pour production
 RUN npm run build

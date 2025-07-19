@@ -1,0 +1,14 @@
+FROM cypress/included:13.6.0
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY frontend/cypress.config.js ./
+COPY frontend/cypress/ ./cypress/
+
+ENV CYPRESS_baseUrl=http://frontend:5173
+ENV CYPRESS_API_URL=http://api:3000/api
+
+CMD ["npx", "cypress", "run"]

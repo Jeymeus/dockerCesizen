@@ -1,0 +1,320 @@
+name: 🔧 Integration Pipeline
+
+on:
+  pull_request:
+    branches: [develop]
+    types: [opened, synchronize, reopened]
+  
+env:
+  NODE_VERSION: '20'
+  
+jobs:
+  # 1-1 Tests API avec Vitest
+  tests-api:
+    name: 🧪 Run API Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: rootpass
+          MARIADB_DATABASE: cesizen_test
+          MARIADB_USER: cesi
+          MARIADB_PASSWORD: cesipass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'api/package-lock.json'
+          
+      - name: 📦 Install API dependencies
+        working-directory: ./api
+        run: npm ci
+        
+      - name: ⏳ Wait for MariaDB
+        run: |
+          while ! mysqladmin ping -h 127.0.0.1 -P 3306 -u cesi -pcesipass --silent; do
+            echo "Waiting for MariaDB..."
+            sleep 2
+          done
+          echo "MariaDB is ready!"
+          
+      - name: 🗄️ Setup test database
+        working-directory: ./api
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USER: cesi
+          DB_PASSWORD: cesipass
+          DB_NAME: cesizen_test
+        run: |
+          echo "DB_HOST=127.0.0.1" > .env.test
+          echo "DB_PORT=3306" >> .env.test
+          echo "DB_USER=cesi" >> .env.test
+          echo "DB_PASSWORD=cesipass" >> .env.test
+          echo "DB_NAME=cesizen_test" >> .env.test
+          
+      - name: 🧪 Run integration tests
+        working-directory: ./api
+        env:
+          NODE_ENV: test
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USER: cesi
+          DB_PASSWORD: cesipass
+          DB_NAME: cesizen_test
+        run: |
+          npm test -- --reporter=verbose --pool=forks --poolOptions.forks.singleFork
+          
+      - name: 📊 Generate test coverage
+        working-directory: ./api
+        env:
+          NODE_ENV: test
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USER: cesi
+          DB_PASSWORD: cesipass
+          DB_NAME: cesizen_test
+        run: npm run test:coverage
+        
+      - name: 📤 Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: api/coverage/
+          retention-days: 3
+
+  # 1-2 Tests E2E avec Cypress
+  tests-e2e:
+    name: 🎭 Run E2E Tests (Cypress)
+    runs-on: ubuntu-latest
+    
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: rootpass
+          MARIADB_DATABASE: cesizen_test
+          MARIADB_USER: cesi
+          MARIADB_PASSWORD: cesipass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: 📦 Install frontend dependencies
+        run: npm ci
+        
+      - name: 📦 Install API dependencies
+        working-directory: ./api
+        run: npm ci
+        
+      - name: ⏳ Wait for MariaDB
+        run: |
+          while ! mysqladmin ping -h 127.0.0.1 -P 3306 -u cesi -pcesipass --silent; do
+            echo "Waiting for MariaDB..."
+            sleep 2
+          done
+          echo "MariaDB is ready!"
+          
+      - name: 🗄️ Setup test database
+        working-directory: ./api
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USER: cesi
+          DB_PASSWORD: cesipass
+          DB_NAME: cesizen_test
+        run: |
+          echo "NODE_ENV=test" > .env
+          echo "DB_HOST=127.0.0.1" >> .env
+          echo "DB_PORT=3306" >> .env
+          echo "DB_USER=cesi" >> .env
+          echo "DB_PASSWORD=cesipass" >> .env
+          echo "DB_NAME=cesizen_test" >> .env
+          echo "PORT=3000" >> .env
+          
+      - name: 🚀 Start API server
+        working-directory: ./api
+        env:
+          NODE_ENV: test
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USER: cesi
+          DB_PASSWORD: cesipass
+          DB_NAME: cesizen_test
+          PORT: 3000
+        run: |
+          npm start &
+          sleep 10
+          
+      - name: 🔨 Build frontend
+        env:
+          VITE_API_URL: http://localhost:3000/api
+        run: npm run build
+        
+      - name: 🚀 Start frontend server
+        run: |
+          npm install -g serve
+          serve -s dist -l 5173 &
+          sleep 5
+          
+      - name: 🎭 Run Cypress tests
+        env:
+          CYPRESS_baseUrl: http://localhost:5173
+          CYPRESS_API_URL: http://localhost:3000/api
+          CYPRESS_TEST_USER_EMAIL: test@cesizen.com
+          CYPRESS_TEST_USER_PASSWORD: TestPassword123!
+          CYPRESS_TEST_ADMIN_EMAIL: admin@cesizen.com
+          CYPRESS_TEST_ADMIN_PASSWORD: AdminPassword123!
+        run: |
+          npx cypress install
+          npx cypress run --headless --browser chrome
+          
+      - name: 📤 Upload Cypress videos
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-videos
+          path: cypress/videos/
+          retention-days: 30
+          
+      - name: 📤 Upload Cypress screenshots
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots/
+          retention-days: 30
+
+  # 1-3 Quality Gate avec SonarQube (commenté pour l'instant)
+  # quality-gate:
+  #   name: 🔍 Quality Gate (SonarQube)
+  #   runs-on: ubuntu-latest
+  #   needs: [tests-api, tests-e2e]
+    
+  #   steps:
+  #     - name: 📥 Checkout code
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0  # Full history for better analysis
+          
+  #     - name: 🟢 Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: ${{ env.NODE_VERSION }}
+  #         cache: 'npm'
+  #         cache-dependency-path: 'api/package-lock.json'
+          
+  #     - name: 📦 Install dependencies
+  #       working-directory: ./api
+  #       run: npm ci
+        
+  #     - name: 📥 Download coverage reports
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: coverage-reports
+  #         path: api/coverage/
+          
+  #     - name: 🔍 SonarQube Scan
+  #       uses: sonarqube-quality-gate-action@master
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  #         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+  #       with:
+  #         projectKey: cesizen-api
+  #         projectName: Cesizen API
+  #         sources: api/
+  #         exclusions: |
+  #           api/node_modules/**,
+  #           api/tests/**,
+  #           api/coverage/**
+  #         javascript.lcov.reportPaths: api/coverage/lcov.info
+          
+  # 1-4 Sécurité avec Snyk (commenté pour l'instant)
+  # security-scan:
+  #   name: 🛡️ Security Scan (Snyk)
+  #   runs-on: ubuntu-latest
+  #   needs: [tests-api, tests-e2e]
+    
+  #   steps:
+  #     - name: 📥 Checkout code
+  #       uses: actions/checkout@v4
+        
+  #     - name: 🟢 Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: ${{ env.NODE_VERSION }}
+  #         cache: 'npm'
+  #         cache-dependency-path: 'api/package-lock.json'
+          
+  #     - name: 📦 Install dependencies
+  #       working-directory: ./api
+  #       run: npm ci
+        
+  #     - name: 🛡️ Run Snyk security scan
+  #       uses: snyk/actions/node@master
+  #       env:
+  #         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+  #       with:
+  #         args: |
+  #           --severity-threshold=medium
+  #           --file=api/package.json
+  #           --project-name=cesizen-api
+            
+  #     - name: 📤 Upload Snyk report
+  #       uses: actions/upload-artifact@v4
+  #       if: always()
+  #       with:
+  #         name: snyk-report
+  #         path: snyk.sarif
+  #         retention-days: 30
+          
+  # ✅ Integration Summary
+  integration-summary:
+    name: ✅ Integration Summary
+    runs-on: ubuntu-latest
+    needs: [tests-api, tests-e2e]
+    if: always()
+    
+    steps:
+      - name: 📋 Integration Results
+        run: |
+          echo "🧪 API Tests: ${{ needs.tests-api.result }}"
+          echo "🎭 E2E Tests: ${{ needs.tests-e2e.result }}"
+          
+          if [[ "${{ needs.tests-api.result }}" == "success" && 
+                "${{ needs.tests-e2e.result }}" == "success" ]]; then
+            echo "✅ Integration pipeline PASSED - Ready for develop merge!"
+            exit 0
+          else
+            echo "❌ Integration pipeline FAILED - Check the logs above"
+            exit 1
+          fi

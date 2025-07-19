@@ -10,7 +10,7 @@ services:
       MARIADB_USER: ${DB_USER:-cesi}
       MARIADB_PASSWORD: ${DB_PASSWORD:-cesipass}
     ports:
-      - "3306:3306"
+      - "12000:3306"
     volumes:
       - mariadb_data:/var/lib/mysql
       - ./api/database/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -23,6 +23,29 @@ services:
       interval: 1m
       timeout: 5s
       retries: 3
+
+  mariadb-test:
+    image: mariadb:10.11
+    container_name: cesizen-mariadb-test
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: rootpass
+      MARIADB_DATABASE: cesizen_test
+      MARIADB_USER: cesi
+      MARIADB_PASSWORD: cesipass
+    ports:
+      - "12100:3306"  # test exposed on a separate port
+    volumes:
+      - mariadb_test_data:/var/lib/mysql
+      - ./api/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - cesizen-network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
 
   # API Backend
   api:
@@ -58,7 +81,7 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: ${NODE_ENV:-production}
-      VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3000/api}
     ports:
       - "5173:5173"
     depends_on:
@@ -66,11 +89,51 @@ services:
     networks:
       - cesizen-network
     volumes:
-      - ./src:/app/src
+      - ./frontendsrc:/app/src
       - /app/node_modules
+
+  # Tests Cypress
+  cypress:
+    build:
+      context: .
+      dockerfile: Dockerfile.cypress
+    container_name: cesizen-cypress
+    environment:
+      CYPRESS_baseUrl: http://frontend:5173
+      CYPRESS_API_URL: http://api:3000/api
+      CYPRESS_TEST_USER_EMAIL: test@cesizen.com
+      CYPRESS_TEST_USER_PASSWORD: TestPassword123!
+      CYPRESS_TEST_ADMIN_EMAIL: admin@cesizen.com
+      CYPRESS_TEST_ADMIN_PASSWORD: AdminPassword123!
+      # Ajout pour les tests headless dans Docker
+      CYPRESS_CACHE_FOLDER: /root/.cache/Cypress
+    depends_on:
+      - frontend
+      - api
+    networks:
+      - cesizen-network
+    volumes:
+      - ./frontend/cypress:/app/cypress
+      - ./frontend/cypress.config.js:/app/cypress.config.js
+      - ./frontend/package.json:/app/package.json
+      - cypress_videos:/app/cypress/videos
+      - cypress_screenshots:/app/cypress/screenshots
+      # Cache Cypress pour éviter de re-télécharger
+      - cypress_cache:/root/.cache/Cypress
+    profiles:
+      - testing
 
 volumes:
   mariadb_data:
+    driver: local
+  mariadb_test_data:
+    driver: local
+  # ✅ Ajout des volumes manquants pour Cypress
+  cypress_videos:
+    driver: local
+  cypress_screenshots:
+    driver: local
+  cypress_cache:
     driver: local
 
 networks:
