@@ -2,7 +2,7 @@ name: 02_1_Canary Build & Scan
 
 on:
   push:
-    branches: [develop]
+    branches: [toto]
 
 env:
   REGISTRY: ghcr.io

@@ -2,7 +2,7 @@ name: 02_2_Canary Deploy & Test
 
 on:
   pull_request:
-    branches: [release]
+    branches: [toto]
 
 env:
   REGISTRY: ghcr.io

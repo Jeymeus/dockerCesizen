@@ -26,6 +26,7 @@ jobs:
           projectBaseDir: ./api
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACKEND }}
+          SONAR_SCANNER_OPTS: "-Dsonar.newCode.period=1"
 
   Quality_Frontend:
     name: 🔍 SonarQube Frontend Analysis
@@ -43,3 +44,4 @@ jobs:
           projectBaseDir: ./frontend
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_FRONTEND }}
+          SONAR_SCANNER_OPTS: "-Dsonar.newCode.period=1"
