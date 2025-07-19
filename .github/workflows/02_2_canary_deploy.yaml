@@ -101,6 +101,7 @@ jobs:
           target: 'http://${{ secrets.CANARY_HOST }}:5173'
           rules_file_name: '.zap/rules.tsv'
           cmd_options: '-a'
+          token: ${{ github.token }}
 
       - name: 📤 Upload ZAP Report
         uses: actions/upload-artifact@v4
