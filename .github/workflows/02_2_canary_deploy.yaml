@@ -94,7 +94,7 @@ jobs:
           target: 'http://${{ secrets.CANARY_HOST }}:3000'
           fail_action: true
           artifact_name: 'zap_scan_api'
-          issue_title: 'Zap APIScan Report'
+          issue_title: 'Zap API Scan Report'
 
       - name: 🛡️ ZAP Scan Frontend
         uses: zaproxy/action-baseline@v0.14.0
