@@ -1,4 +1,12 @@
 import jwt from 'jsonwebtoken'
+import { config } from 'dotenv'
+
+// Charger le bon fichier d'environnement selon le contexte (comme dans db.js)
+if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
+    config({ path: '.env.test' });
+} else {
+    config();
+}
 
 // À charger depuis .env en prod (via dotenv)
 if (!process.env.JWT_SECRET) {
