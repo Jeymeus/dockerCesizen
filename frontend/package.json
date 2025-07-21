@@ -38,7 +38,7 @@
     "cypress": "^13.6.0",
     "nodemon": "^3.1.10",
     "start-server-and-test": "^2.0.3",
-    "terser": "^5.19.4",
+    "terser": "^5.43.1",
     "vite": "^6.2.0"
   }
 }

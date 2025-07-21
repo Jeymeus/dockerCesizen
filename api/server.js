@@ -11,11 +11,21 @@ import entryRoutes from './routes/entryRoutes.js'
 import menuRoutes from './routes/menuRoutes.js'
 import pageRoutes from './routes/pageRoutes.js'
 
+// 🔒 Import du middleware de sécurité
+import { securityHeaders, handleRobotsSitemap, securedCors } from './middlewares/securityMiddleware.js'
+
 const app = express()
 
-// 🛡️ Middlewares globaux
-app.use(cors())
-app.use(express.json())
+// 🔒 Sécurité - Masquer Express
+app.disable('x-powered-by')
+
+// 🔒 Middlewares de sécurité
+app.use(securityHeaders)
+app.use(handleRobotsSitemap)
+app.use(securedCors)
+
+// 🛡️ Autres middlewares globaux
+app.use(express.json({ limit: '10mb' }))
 
 // 🏠 Route de base pour tester
 app.get('/', (req, res) => {
@@ -33,7 +43,6 @@ app.use('/api/emotions', emotionRoutes)
 app.use('/api/entries', entryRoutes)
 app.use('/api/menus', menuRoutes)
 app.use('/api/pages', pageRoutes)
-
 
 // 🚀 Lancement du serveur après test DB
 const PORT = process.env.PORT || 3000
