@@ -52,6 +52,8 @@ export const handleRobotsSitemap = (req, res, next) => {
     if (req.path === '/robots.txt') {
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('X-Content-Type-Options', 'nosniff');
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+
         return res.status(200).send('User-agent: *\nDisallow: /\n');
     }
 

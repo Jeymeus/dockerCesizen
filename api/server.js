@@ -29,12 +29,17 @@ app.use(express.json({ limit: '10mb' }))
 
 // 🏠 Route de base pour tester
 app.get('/', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
     res.json({
         message: '🚀 API CesiZen fonctionne !',
         version: '1.0.0',
         status: 'OK'
-    })
-})
+    });
+});
+
 
 // 📦 Routes API
 app.use('/api/auth', authRoutes)
