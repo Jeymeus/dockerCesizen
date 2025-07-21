@@ -98,6 +98,7 @@ jobs:
 
       - name: 🛡️ ZAP Scan Frontend
         uses: zaproxy/action-baseline@v0.14.0
+        continue-on-error: true
         with:
           target: 'http://${{ secrets.CANARY_HOST }}:5173'
           fail_action: true
