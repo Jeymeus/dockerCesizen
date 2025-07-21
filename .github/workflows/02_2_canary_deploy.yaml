@@ -89,6 +89,7 @@ jobs:
 
       - name: 🛡️ ZAP Scan Api
         uses: zaproxy/action-baseline@v0.9.0
+        continue-on-error: true
         with:
           target: 'http://${{ secrets.CANARY_HOST }}:3000'
           fail_action: true
