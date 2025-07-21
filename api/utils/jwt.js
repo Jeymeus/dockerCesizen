@@ -1,7 +1,10 @@
 import jwt from 'jsonwebtoken'
 
 // À charger depuis .env en prod (via dotenv)
-const SECRET = process.env.JWT_SECRET || 'supersecret'
+if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET non défini. Ajoute-le dans le fichier .env.");
+}
+const SECRET = process.env.JWT_SECRET;
 
 /**
  * Génère un token JWT avec payload personnalisé

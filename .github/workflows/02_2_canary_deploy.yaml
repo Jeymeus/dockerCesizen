@@ -110,7 +110,7 @@ jobs:
         run: |
           echo "🔍 Checking for open ZAP issues..."
           BACK_COUNT=$(gh issue list --search "ZAP API Scan Report in:title state:open" --json number --jq 'length')
-          FRONT_COUNT=$(gh issue list --search "ZAP Front Scan Report in:title state:open" --json number --jq 'length')
+          FRONT_COUNT=$(gh issue list --search "ZAP Frontend Scan Report in:title state:open" --json number --jq 'length')
           
           echo "🔍 Trouvé $BACK_COUNT issues pour API"
           echo "🔍 Trouvé $FRONT_COUNT issues pour Frontend"

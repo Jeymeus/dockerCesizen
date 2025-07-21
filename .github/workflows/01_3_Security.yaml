@@ -43,7 +43,7 @@ jobs:
         with:
           name: snyk-api-report
           path: api/snyk-results.sarif
-          retention-days: 30
+          retention-days: 3
 
   Security_Frontend:
     name: 🛡️ Snyk Frontend Security Scan
@@ -81,4 +81,4 @@ jobs:
         with:
           name: snyk-frontend-report
           path: frontend/snyk-results.sarif
-          retention-days: 30
+          retention-days: 3
