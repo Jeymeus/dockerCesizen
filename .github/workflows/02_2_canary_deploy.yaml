@@ -84,37 +84,24 @@ jobs:
       - name: 📥 Checkout
         uses: actions/checkout@v4
 
-      - name: ⏳ Wait for Application
-        run: |
-          echo "🔍 Waiting for application to be ready..."
-          for i in {1..20}; do
-            if curl -f "http://${{ secrets.CANARY_HOST }}:5173/" > /dev/null 2>&1; then
-              echo "✅ Application ready after $i attempts!"
-              break
-            fi
-            echo "⏳ Attempt $i/20: Application not ready, waiting 15s..."
-            sleep 15
-          done
-          
-          # Test final pour être sûr
-          if ! curl -f "http://${{ secrets.CANARY_HOST }}:5173/" > /dev/null 2>&1; then
-            echo "❌ Application still not ready after 5 minutes"
-            exit 1
-          fi
+      - name: 🛡️ ZAP Scan Api
+        uses: zaproxy/action-baseline@v0.9.0
+        with:
+          target: 'http://${{ secrets.CANARY_HOST }}:3000'
+          fail_action: true
+          artifact_name: 'zap-scan-api'
+          issue_title: 'Zap Scan Api Report'
 
-      - name: 🛡️ ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.12.0
+      - name: 🛡️ ZAP Scan Frontend
+        uses: zaproxy/action-baseline@v0.14.0
         with:
           target: 'http://${{ secrets.CANARY_HOST }}:5173'
-          rules_file_name: '.zap/rules.tsv'
-          cmd_options: '-a'
+          fail_action: true
+          artifact_name: 'zap-scan-frontend'
+          issue_title: 'Zap Scan Frontend Report'
 
       - name: 📋 Display ZAP Summary
         if: always()
         run: |
-          if [ -f "report_json.json" ]; then
             echo "🛡️ ZAP Scan completed!"
             echo "📊 Check the uploaded artifacts for detailed reports"
-          else
-            echo "⚠️ No ZAP reports found"
-          fi
