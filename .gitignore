@@ -7,3 +7,5 @@ dist/
 .vscode/*
 api/coverage/
 frontend/coverage/
+/api/snyk-report.txt
+/frontend/snyk-report.txt
