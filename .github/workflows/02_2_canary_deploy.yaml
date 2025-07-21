@@ -104,8 +104,21 @@ jobs:
           artifact_name: 'zap_scan_frontend'
           issue_title: 'Zap Scan Frontend Report'
 
-      - name: 📋 Display ZAP Summary
+      - name: ❌ Erreur ZAP si issues existent (API or Front)
         if: always()
         run: |
-            echo "🛡️ ZAP Scan completed!"
-            echo "📊 Check the uploaded artifacts for detailed reports"
+          echo "🔍 Checking for open ZAP issues..."
+          BACK_COUNT=$(gh issue list --search "ZAP API Scan Report in:title state:open" --json number --jq 'length')
+          FRONT_COUNT=$(gh issue list --search "ZAP Front Scan Report in:title state:open" --json number --jq 'length')
+          
+          echo "🔍 Trouvé $BACK_COUNT issues pour API"
+          echo "🔍 Trouvé $FRONT_COUNT issues pour Frontend"
+          
+          if [ "$BACK_COUNT" -gt 0 ] || [ "$FRONT_COUNT" -gt 0 ]; then
+            echo "❌ Au moins un problème ZAP est toujours ouvert. Échec du travail."
+            exit 1
+          else
+            echo "✅ Aucun problème ZAP ouvert trouvé. Tout est clair."
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
