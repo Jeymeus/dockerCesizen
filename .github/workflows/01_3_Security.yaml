@@ -81,4 +81,4 @@ jobs:
         with:
           name: snyk-frontend-report
           path: frontend/snyk-results.sarif
-          retention-days: 3
+          retention-days: 30
