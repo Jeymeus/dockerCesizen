@@ -94,7 +94,7 @@ jobs:
           target: 'http://${{ secrets.CANARY_HOST }}:3000'
           fail_action: true
           artifact_name: 'zap_scan_api'
-          issue_title: 'Zap Scan Api Report'
+          issue_title: 'Zap API Scan Report'
 
       - name: 🛡️ ZAP Scan Frontend
         uses: zaproxy/action-baseline@v0.14.0
@@ -103,14 +103,14 @@ jobs:
           target: 'http://${{ secrets.CANARY_HOST }}:5173'
           fail_action: true
           artifact_name: 'zap_scan_frontend'
-          issue_title: 'Zap Scan Frontend Report'
+          issue_title: 'Zap Frontend Scan Report'
 
       - name: ❌ Erreur ZAP si issues existent (API or Front)
         if: always()
         run: |
           echo "🔍 Checking for open ZAP issues..."
           BACK_COUNT=$(gh issue list --search "ZAP API Scan Report in:title state:open" --json number --jq 'length')
-          FRONT_COUNT=$(gh issue list --search "ZAP Front Scan Report in:title state:open" --json number --jq 'length')
+          FRONT_COUNT=$(gh issue list --search "ZAP Frontend Scan Report in:title state:open" --json number --jq 'length')
           
           echo "🔍 Trouvé $BACK_COUNT issues pour API"
           echo "🔍 Trouvé $FRONT_COUNT issues pour Frontend"

@@ -1,7 +1,18 @@
 import jwt from 'jsonwebtoken'
+import { config } from 'dotenv'
+
+// Charger le bon fichier d'environnement selon le contexte (comme dans db.js)
+if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
+    config({ path: '.env.test' });
+} else {
+    config();
+}
 
 // À charger depuis .env en prod (via dotenv)
-const SECRET = process.env.JWT_SECRET || 'supersecret'
+if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET non défini. Ajoute-le dans le fichier .env.");
+}
+const SECRET = process.env.JWT_SECRET;
 
 /**
  * Génère un token JWT avec payload personnalisé

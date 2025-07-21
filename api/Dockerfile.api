@@ -1,19 +1,36 @@
+# Dockerfile.api - Version sécurisée
 FROM node:20-alpine
 
+# Créer un utilisateur non-root
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S apiuser -u 1001 -G nodejs
+
 # Installer les dépendances nécessaires pour bcrypt
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 make g++ dumb-init
 
 WORKDIR /app
 
-# Copier les dépendances
-COPY package*.json ./
-RUN npm ci --only=production
+# Changer le propriétaire du dossier
+RUN chown -R apiuser:nodejs /app
 
-# Copier le code (depuis le contexte api/)
+# Copier les dépendances et installer en tant que root
+COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+
+# Copier le code
 COPY . ./
+
+# Changer le propriétaire de tous les fichiers
+RUN chown -R apiuser:nodejs /app
+
+# Passer à l'utilisateur non-root
+USER apiuser
 
 # Exposer le port
 EXPOSE 3000
+
+# Utiliser dumb-init pour une gestion propre des signaux
+ENTRYPOINT ["dumb-init", "--"]
 
 # Démarrer l'API
 CMD ["node", "server.js"]

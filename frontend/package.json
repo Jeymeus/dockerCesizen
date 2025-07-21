@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build --minify terser",
+    "build:secure": "vite build --minify terser --mode production",
     "preview": "vite preview",
+    "preview:secure": "vite preview --mode production",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
     "cypress:run:headless": "cypress run --headless",
@@ -36,6 +38,7 @@
     "cypress": "^13.6.0",
     "nodemon": "^3.1.10",
     "start-server-and-test": "^2.0.3",
+    "terser": "^5.43.1",
     "vite": "^6.2.0"
   }
 }

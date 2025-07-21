@@ -1,25 +1,32 @@
-FROM node:20-alpine
+# Dockerfile.frontend - Version nginx avec port 5173
+FROM node:20-alpine as builder
 
 WORKDIR /app
 
-# Copier les dépendances (depuis le contexte frontend/)
+# Copier SEULEMENT les dépendances frontend
 COPY package*.json ./
 RUN npm ci
 
-# Copier le code source (depuis le contexte frontend/)
+# Copier SEULEMENT le code frontend
 COPY src/ ./src/
 COPY public/ ./public/
 COPY index.html ./
 COPY vite.config.js ./
 
-# Build pour production
+# Build pour production avec optimisations sécurité
 RUN npm run build
 
-# Installer serve pour servir les fichiers statiques
-RUN npm install -g serve
+# Stage 2: nginx pour servir avec headers de sécurité
+FROM nginx:alpine
 
-# Exposer le port
+# Copier la configuration nginx sécurisée
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Copier les fichiers buildés
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Exposer le port 5173 (comme avant)
 EXPOSE 5173
 
-# Servir le frontend
-CMD ["serve", "-s", "dist", "-l", "5173"]
+# Démarrer nginx
+CMD ["nginx", "-g", "daemon off;"]
