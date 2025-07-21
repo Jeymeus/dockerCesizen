@@ -27,21 +27,22 @@ jobs:
         run: npm ci
         
       - name: 🛡️ Run Snyk security scan Back
-        uses: snyk/actions/node@master
+        working-directory: ./api
+        run: |
+          npx snyk test \
+            --severity-threshold=medium \
+            --file=package.json \
+            --project-name=cesizen-api \
+            --sarif-file-output=snyk-results.sarif
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: |
-            --severity-threshold=medium
-            --file=api/package.json
-            --project-name=cesizen-api
             
       - name: 📤 Upload Snyk Back report
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: snyk-api-report
-          path: snyk.sarif
+          path: api/snyk-results.sarif
           retention-days: 30
 
   Security_Frontend:
@@ -64,40 +65,20 @@ jobs:
         run: npm ci
         
       - name: 🛡️ Run Snyk security scan Frontend
-        uses: snyk/actions/node@master
+        working-directory: ./frontend
+        run: |
+          npx snyk test \
+            --severity-threshold=medium \
+            --file=package.json \
+            --project-name=cesizen-frontend \
+            --sarif-file-output=snyk-results.sarif
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: |
-            --severity-threshold=medium
-            --file=frontend/package.json
-            --project-name=cesizen-frontend
             
       - name: 📤 Upload Snyk Frontend report
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: snyk-frontend-report
-          path: snyk.sarif
+          path: frontend/snyk-results.sarif
           retention-days: 30
-
-  Security_Summary:
-    name: 📋 Security Summary
-    runs-on: ubuntu-latest
-    needs: [Security_Back, Security_Frontend]
-    if: always()
-    
-    steps:
-      - name: 📋 Security Results
-        run: |
-          echo "🛡️ Back Security: ${{ needs.Security_Back.result }}"
-          echo "🛡️ Frontend Security: ${{ needs.Security_Frontend.result }}"
-          
-          if [[ "${{ needs.Security_Back.result }}" == "success" && 
-                "${{ needs.Security_Frontend.result }}" == "success" ]]; then
-            echo "✅ Security Scan PASSED"
-            exit 0
-          else
-            echo "❌ Security Scan FAILED"
-            exit 1
-          fi
