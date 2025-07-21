@@ -26,7 +26,7 @@ services:
 
   # API Backend
   api:
-    image: ghcr.io/jeymeus/dockercesizen-api:${IMAGE_TAG:-canary}
+    image: ghcr.io/jeymeus/dockercesizen-api:canary
     container_name: cesizen-api-canary
     restart: unless-stopped
     environment:
@@ -53,7 +53,7 @@ services:
 
   # Frontend
   frontend:
-    image: ghcr.io/jeymeus/dockercesizen-frontend:${IMAGE_TAG:-canary}
+    image: ghcr.io/jeymeus/dockercesizen-frontend:canary
     container_name: cesizen-frontend-canary
     restart: unless-stopped
     environment:

@@ -7,8 +7,6 @@ on:
 env:
   REGISTRY: ghcr.io
   USERNAME: ${{ github.actor }}
-  BUILD_COMMIT: ${{ github.sha }}
-  BUILD_DATE: ${{ github.event.head_commit.timestamp }}
 
 jobs:
   Docker_Build_Canary:
@@ -18,12 +16,6 @@ jobs:
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
-
-      - name: 🕵️ Afficher les infos du build
-        run: |
-          echo "🔖 Commit: $BUILD_COMMIT"
-          echo "🕒 Date: $BUILD_DATE"
-          echo "📦 Repository: $GITHUB_REPOSITORY"
 
       - name: 🔐 Registry Login
         uses: docker/login-action@v3
@@ -35,7 +27,7 @@ jobs:
       - name: 📝 Downcase Image Name
         run: echo "IMAGE_NAME_LOWER=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
 
-      - name: 🐳 API Build & Push
+      - name: 🐳 API Build Push
         uses: docker/build-push-action@v5
         with:
           context: ./api
@@ -43,12 +35,9 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-api:canary
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-api:canary-${{ env.BUILD_COMMIT }}
-          build-args: |
-            GIT_COMMIT=${{ env.BUILD_COMMIT }}
-            BUILD_DATE=${{ env.BUILD_DATE }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-api:canary-${{ github.sha }}
 
-      - name: 🎨 Frontend Build & Push
+      - name: 🎨 Frontend Build Push
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
@@ -56,10 +45,7 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-frontend:canary
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-frontend:canary-${{ env.BUILD_COMMIT }}
-          build-args: |
-            GIT_COMMIT=${{ env.BUILD_COMMIT }}
-            BUILD_DATE=${{ env.BUILD_DATE }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-frontend:canary-${{ github.sha }}
 
   Container_Scan:
     name: 🔍 Container Security Scan
@@ -83,14 +69,14 @@ jobs:
       - name: 🛡️ Trivy Scan - API
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-api:canary-${{ env.BUILD_COMMIT }}
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-api:canary
           format: 'sarif'
           output: 'trivy-api-results.sarif'
 
       - name: 🛡️ Trivy Scan - Frontend
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-frontend:canary-${{ env.BUILD_COMMIT }}
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-frontend:canary
           format: 'sarif'
           output: 'trivy-frontend-results.sarif'
 
