@@ -6,6 +6,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  BUILD_COMMIT: ${{ github.sha }}
 
 jobs:
   Deploy_Canary:
@@ -19,6 +20,12 @@ jobs:
 
       - name: 📝 Downcase Image Name
         run: echo "IMAGE_NAME_LOWER=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
+
+      - name: 🔎 Affiche les tags et le commit
+        run: |
+          echo "🔖 Commit: $BUILD_COMMIT"
+          echo "🐳 API Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-api:canary-${{ env.BUILD_COMMIT }}"
+          echo "🎨 Front Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-frontend:canary-${{ env.BUILD_COMMIT }}"
 
       - name: 📤 Upload Docker Compose
         uses: appleboy/scp-action@v0.1.7
@@ -39,19 +46,19 @@ jobs:
           key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
           script: |
             cd /opt/cesizen
-            
-            # Create directory if needed
+
+            # Préparation
             sudo mkdir -p /opt/cesizen
             sudo chown ${{ secrets.CANARY_USERNAME }}:${{ secrets.CANARY_USERNAME }} /opt/cesizen
-            
-            # Login to GitHub Container Registry
+
+            # Connexion au registre
             echo ${{ secrets.DCKCESIZEN_PAT }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
-            # Pull latest images
-            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-api:canary
-            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-frontend:canary
-            
-            # Create environment file
+
+            # Récupération des images taguées avec le SHA
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-api:canary-${{ env.BUILD_COMMIT }}
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-frontend:canary-${{ env.BUILD_COMMIT }}
+
+            # Fichier d'environnement
             cat > .env << EOF
             NODE_ENV=production
             DB_HOST=mariadb
@@ -62,17 +69,18 @@ jobs:
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             PORT=3000
             VITE_API_URL=http://${{ secrets.CANARY_HOST }}:3000/api
+            IMAGE_TAG=canary-${{ env.BUILD_COMMIT }}
             EOF
-            
-            # Deploy
+
+            # Déploiement
             docker compose -f docker-compose.canary.yml down --remove-orphans || true
             docker compose -f docker-compose.canary.yml up -d
-            
-            # Wait and health check
+
+            # Healthchecks
             sleep 30
             curl -f http://localhost:3000/ || exit 1
             curl -f http://localhost:5173/ || exit 1
-            
+
             echo "✅ Canary deployment successful!"
 
   ZAP_Security_Scan:
@@ -111,10 +119,10 @@ jobs:
           echo "🔍 Checking for open ZAP issues..."
           BACK_COUNT=$(gh issue list --search "ZAP API Scan Report in:title state:open" --json number --jq 'length')
           FRONT_COUNT=$(gh issue list --search "ZAP Frontend Scan Report in:title state:open" --json number --jq 'length')
-          
+
           echo "🔍 Trouvé $BACK_COUNT issues pour API"
           echo "🔍 Trouvé $FRONT_COUNT issues pour Frontend"
-          
+
           if [ "$BACK_COUNT" -gt 0 ] || [ "$FRONT_COUNT" -gt 0 ]; then
             echo "❌ Au moins un problème ZAP est toujours ouvert. Échec du travail."
             exit 1
