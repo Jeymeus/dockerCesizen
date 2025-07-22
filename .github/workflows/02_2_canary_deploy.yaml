@@ -167,7 +167,7 @@ jobs:
           fi
           
           # API accessible via proxy
-          if curl -f -m 10 http://${{ secrets.CANARY_HOST }}/api/health 2>/dev/null; then
+          if curl -f -m 10 http://${{ secrets.CANARY_HOST }}/api/users 2>/dev/null; then
             echo "✅ API accessible via proxy nginx"
           else
             echo "❌ API non accessible via proxy"
