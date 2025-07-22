@@ -57,7 +57,7 @@ jobs:
           port: 22
           username: ${{ secrets.CANARY_USERNAME }}
           key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
-          source: "./docker-compose.canary.yml,./api/database/init.sql,./frontend/nginx.conf"
+          source: "./docker-compose.canary.yml,./api/database/init.sql"
           target: "/opt/cesizen/"
 
       - name: 🚀 Deploy Pre-built Images
@@ -94,7 +94,8 @@ jobs:
             DB_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             PORT=3000
-            VITE_API_URL=/api
+            VITE_API_URL=http://${{ secrets.CANARY_HOST }}:3000
+            CANARY_HOST=${{ secrets.CANARY_HOST }}
             DEPLOYED_SHA=${{ env.DEVELOP_SHA }}
             DEPLOYED_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
             EOF
@@ -124,27 +125,29 @@ jobs:
           echo "⏳ Attente démarrage des services..."
           sleep 45
 
-      - name: 🏥 Health Check
+      - name: 🏥 Health Check - Frontend
         run: |
-          echo "🏥 Vérification health check..."
-          if curl -f -m 10 http://${{ secrets.CANARY_HOST }}/health; then
-            echo "✅ Health check OK"
+          echo "🏥 Vérification health check frontend..."
+          if curl -f -m 10 http://${{ secrets.CANARY_HOST }}/; then
+            echo "✅ Frontend health check OK"
           else
-            echo "❌ Health check échoué"
+            echo "❌ Frontend health check échoué"
             exit 1
           fi
 
-      - name: 🔒 Validate Security Infrastructure
+      - name: 🏥 Health Check - API
         run: |
-          echo "🔍 Validation infrastructure sécurisée..."
-          
-          # API non accessible directement
-          if curl -f -m 5 http://${{ secrets.CANARY_HOST }}:3000/ 2>/dev/null; then
-            echo "❌ ERREUR: API accessible publiquement sur port 3000!"
-            exit 1
+          echo "🏥 Vérification health check API..."
+          if curl -f -m 10 http://${{ secrets.CANARY_HOST }}:3000/health; then
+            echo "✅ API health check OK"
           else
-            echo "✅ OK: API non accessible publiquement"
+            echo "❌ API health check échoué"
+            exit 1
           fi
+
+      - name: 🔒 Validate Database Security
+        run: |
+          echo "🔍 Validation sécurité base de données..."
           
           # BDD non accessible directement
           if nc -z -v -w5 ${{ secrets.CANARY_HOST }} 3306 2>/dev/null; then
@@ -166,6 +169,14 @@ jobs:
             exit 1
           fi
           
+          # API accessible
+          if curl -f -m 10 http://${{ secrets.CANARY_HOST }}:3000/health; then
+            echo "✅ API accessible"
+          else
+            echo "❌ API non accessible"
+            exit 1
+          fi
+          
   Deploy_Summary:
     name: 📋 Deployment Summary
     needs: [Deploy_Canary, Infrastructure_Validation]
@@ -183,6 +194,10 @@ jobs:
           echo "  🔗 API: ${{ needs.Deploy_Canary.outputs.api_image }}"
           echo "  🎨 Frontend: ${{ needs.Deploy_Canary.outputs.frontend_image }}"
           echo "  📌 SHA: ${{ needs.Deploy_Canary.outputs.deployed_sha }}"
+          echo ""
+          echo "🔗 Accès Canary:"
+          echo "  Frontend: http://${{ secrets.CANARY_HOST }}/"
+          echo "  API: http://${{ secrets.CANARY_HOST }}:3000/"
           
           if [[ "${{ needs.Deploy_Canary.result }}" == "success" && 
                 "${{ needs.Infrastructure_Validation.result }}" == "success" ]]; then
