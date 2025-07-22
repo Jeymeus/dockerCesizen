@@ -1,4 +1,4 @@
-# Dockerfile.frontend - Version nginx avec port 80
+# Dockerfile.frontend - avec conf nginx propre
 FROM node:20-alpine as builder
 
 WORKDIR /app
@@ -12,16 +12,15 @@ COPY vite.config.js ./
 
 RUN npm run build
 
-# Stage 2: nginx
+# -- Étape Nginx --
 FROM nginx:alpine
 
-# ✅ Copier la configuration nginx 
-COPY nginx.conf /etc/nginx/nginx.conf
+# ✅ Copier la conf vers le bon chemin attendu
+COPY default.conf /etc/nginx/conf.d/default.conf
 
 # Copier les fichiers buildés
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Exposer port 80 (standard HTTP)
 EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
