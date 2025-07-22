@@ -9,8 +9,9 @@ services:
       MARIADB_DATABASE: ${DB_NAME:-cesizen}
       MARIADB_USER: ${DB_USER:-cesi}
       MARIADB_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "3306:3306"
+    # ❌ SUPPRIMER l'exposition publique
+    # ports:
+    #   - "3306:3306"
     volumes:
       - mariadb_data:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -24,7 +25,7 @@ services:
       timeout: 5s
       retries: 3
 
-  # API Backend
+  # API Backend - PAS D'EXPOSITION PUBLIQUE
   api:
     image: ghcr.io/jeymeus/dockercesizen-api:canary
     container_name: cesizen-api-canary
@@ -37,8 +38,9 @@ services:
       DB_NAME: ${DB_NAME:-cesizen}
       PORT: 3000
       JWT_SECRET: ${JWT_SECRET}
-    ports:
-      - "3000:3000"
+    # ❌ SUPPRIMER l'exposition publique
+    # ports:
+    #   - "3000:3000"
     depends_on:
       mariadb:
         condition: service_healthy
@@ -51,22 +53,23 @@ services:
       retries: 3
       start_period: 40s
 
-  # Frontend
+  # Frontend avec nginx (SEUL point d'entrée public)
   frontend:
     image: ghcr.io/jeymeus/dockercesizen-frontend:canary
     container_name: cesizen-frontend-canary
     restart: unless-stopped
     environment:
       NODE_ENV: ${NODE_ENV:-production}
-      VITE_API_URL: ${VITE_API_URL}
+      VITE_API_URL: /api  # ✅ URL relative (nginx proxy)
     ports:
-      - "5173:5173"
+      - "80:80"    # ✅ HTTP seulement
     depends_on:
       - api
     networks:
       - cesizen-network
+    # ❌ PAS de volumes SSL pour l'instant
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5173/"]
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]  # ✅ HTTP
       interval: 30s
       timeout: 10s
       retries: 3

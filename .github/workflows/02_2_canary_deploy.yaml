@@ -77,46 +77,40 @@ jobs:
             echo "✅ Canary deployment successful!"
 
   ZAP_Security_Scan:
-    name: 🛡️ ZAP Security Test
-    needs: [Deploy_Canary]
-    runs-on: ubuntu-latest
+      name: 🛡️ ZAP Security Test
+      needs: [Deploy_Canary]
+      runs-on: ubuntu-latest
 
-    steps:
-      - name: 📥 Checkout
-        uses: actions/checkout@v4
+      steps:
+        - name: 📥 Checkout
+          uses: actions/checkout@v4
 
-      - name: 🛡️ ZAP Scan Api
-        uses: zaproxy/action-baseline@v0.9.0
-        with:
-          target: 'http://${{ secrets.CANARY_HOST }}:3000'
-          fail_action: true
-          artifact_name: 'zap_scan_api'
-          issue_title: 'Zap API Scan Report'
+        # ✅ Tester HTTPS
+        - name: 🛡️ ZAP Scan HTTPS Frontend + API via proxy
+          uses: zaproxy/action-baseline@v0.14.0
+          with:
+            target: 'https://${{ secrets.CANARY_HOST }}'  # HTTPS
+            fail_action: true
+            artifact_name: 'zap_scan_full'
+            issue_title: 'Zap Full Stack Scan Report'
 
-      - name: 🛡️ ZAP Scan Frontend
-        uses: zaproxy/action-baseline@v0.14.0
-        continue-on-error: true
-        with:
-          target: 'http://${{ secrets.CANARY_HOST }}:5173'
-          fail_action: true
-          artifact_name: 'zap_scan_frontend'
-          issue_title: 'Zap Frontend Scan Report'
-
-      - name: ❌ Erreur ZAP si issues existent (API or Front)
-        if: always()
-        run: |
-          echo "🔍 Checking for open ZAP issues..."
-          BACK_COUNT=$(gh issue list --search "ZAP API Scan Report in:title state:open" --json number --jq 'length')
-          FRONT_COUNT=$(gh issue list --search "ZAP Frontend Scan Report in:title state:open" --json number --jq 'length')
-
-          echo "🔍 Trouvé $BACK_COUNT issues pour API"
-          echo "🔍 Trouvé $FRONT_COUNT issues pour Frontend"
-
-          if [ "$BACK_COUNT" -gt 0 ] || [ "$FRONT_COUNT" -gt 0 ]; then
-            echo "❌ Au moins un problème ZAP est toujours ouvert. Échec du travail."
-            exit 1
-          else
-            echo "✅ Aucun problème ZAP ouvert trouvé. Tout est clair."
-          fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # ✅ Test que l'API n'est PAS accessible directement
+        - name: 🔒 Vérifier que API n'est pas publique
+          run: |
+            if curl -f -m 5 http://${{ secrets.CANARY_HOST }}:3000/ 2>/dev/null; then
+              echo "❌ ERREUR: API est accessible publiquement!"
+              exit 1
+            else
+              echo "✅ OK: API n'est pas accessible publiquement"
+            fi
+            
+        # ✅ Vérifier redirection HTTP → HTTPS
+        - name: 🔒 Vérifier redirection HTTPS
+          run: |
+            RESPONSE=$(curl -s -I -L http://${{ secrets.CANARY_HOST }})
+            if echo "$RESPONSE" | grep -q "301"; then
+              echo "✅ OK: Redirection HTTP → HTTPS fonctionne"
+            else
+              echo "❌ ERREUR: Pas de redirection HTTPS"
+              exit 1
+            fi
