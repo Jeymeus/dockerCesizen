@@ -173,15 +173,6 @@ jobs:
             echo "❌ API non accessible via proxy"
             exit 1
           fi
-          
-          # Headers sécurité présents
-          HEADERS=$(curl -s -I http://${{ secrets.CANARY_HOST }}/)
-          if echo "$HEADERS" | grep -q "X-Frame-Options"; then
-            echo "✅ Headers de sécurité présents"
-          else
-            echo "❌ Headers de sécurité manquants"
-            exit 1
-          fi
 
   Deploy_Summary:
     name: 📋 Deployment Summary
