@@ -9,12 +9,9 @@ services:
       MARIADB_DATABASE: ${DB_NAME:-cesizen}
       MARIADB_USER: ${DB_USER:-cesi}
       MARIADB_PASSWORD: ${DB_PASSWORD}
-    # ❌ SUPPRIMER l'exposition publique
-    # ports:
-    #   - "3306:3306"
     volumes:
       - mariadb_data:/var/lib/mysql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./api/database/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - cesizen-network
     healthcheck:
@@ -25,7 +22,7 @@ services:
       timeout: 5s
       retries: 3
 
-  # API Backend - PAS D'EXPOSITION PUBLIQUE
+  # API Backend
   api:
     image: ghcr.io/jeymeus/dockercesizen-api:canary
     container_name: cesizen-api-canary
@@ -38,41 +35,36 @@ services:
       DB_NAME: ${DB_NAME:-cesizen}
       PORT: 3000
       JWT_SECRET: ${JWT_SECRET}
-    # ❌ SUPPRIMER l'exposition publique
-    # ports:
-    #   - "3000:3000"
+    ports:
+      - "3000:3000"
     depends_on:
       mariadb:
         condition: service_healthy
     networks:
-      cesizen-network:
-        aliases:
-          - api
-
+      - cesizen-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
 
-  # Frontend avec nginx (SEUL point d'entrée public)
+  # Frontend
   frontend:
     image: ghcr.io/jeymeus/dockercesizen-frontend:canary
     container_name: cesizen-frontend-canary
     restart: unless-stopped
     environment:
       NODE_ENV: ${NODE_ENV:-production}
-      VITE_API_URL: /api  # ✅ URL relative (nginx proxy)
+      VITE_API_URL: http://${CANARY_HOST:-localhost}:3000
     ports:
-      - "80:80"    # ✅ HTTP seulement
+      - "80:80"
     depends_on:
       - api
     networks:
       - cesizen-network
-    # ❌ PAS de volumes SSL pour l'instant
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/"]  # ✅ HTTP
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
       interval: 30s
       timeout: 10s
       retries: 3
