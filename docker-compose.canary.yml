@@ -45,7 +45,10 @@ services:
       mariadb:
         condition: service_healthy
     networks:
-      - cesizen-network
+      cesizen-network:
+        aliases:
+          - api
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/"]
       interval: 30s
