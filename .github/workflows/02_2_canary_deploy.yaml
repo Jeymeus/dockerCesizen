@@ -170,7 +170,7 @@ jobs:
           fi
           
           # API accessible
-          if curl -f -m 10 http://${{ secrets.CANARY_HOST }}:3000/health; then
+          if curl -f -m 10 http://${{ secrets.CANARY_HOST }}:3000/; then
             echo "✅ API accessible"
           else
             echo "❌ API non accessible"
