@@ -6,7 +6,7 @@ RUN addgroup -g 1001 -S nodejs && \
     adduser -S apiuser -u 1001 -G nodejs
 
 # Installer les dépendances nécessaires pour bcrypt
-RUN apk add --no-cache python3 make g++ dumb-init
+RUN apk add --no-cache python3 make g++ dumb-init curl
 
 WORKDIR /app
 
