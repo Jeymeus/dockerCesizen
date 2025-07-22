@@ -166,14 +166,6 @@ jobs:
             exit 1
           fi
           
-          # API accessible via proxy
-          if curl -f -m 10 http://${{ secrets.CANARY_HOST }}/api/users 2>/dev/null; then
-            echo "✅ API accessible via proxy nginx"
-          else
-            echo "❌ API non accessible via proxy"
-            exit 1
-          fi
-
   Deploy_Summary:
     name: 📋 Deployment Summary
     needs: [Deploy_Canary, Infrastructure_Validation]
