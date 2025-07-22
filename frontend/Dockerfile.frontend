@@ -15,8 +15,8 @@ RUN npm run build
 # Stage 2: nginx
 FROM nginx:alpine
 
-# ✅ Copier la configuration nginx depuis le bon chemin
-COPY frontend/nginx.conf /etc/nginx/nginx.conf
+# ✅ Copier la configuration nginx 
+COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copier les fichiers buildés
 COPY --from=builder /app/dist /usr/share/nginx/html

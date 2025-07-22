@@ -1,0 +1,170 @@
+name: 02_3_Canary Security Scan
+
+on:
+  push:
+    branches: [release]
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  ZAP_Security_Scan:
+    name: 🛡️ ZAP Security Validation
+    runs-on: ubuntu-latest
+    environment: canary
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: ⏳ Wait for Canary Stability
+        run: |
+          echo "⏳ Attente stabilisation environnement canary..."
+          sleep 60
+          
+          # Vérifier que le canary répond
+          for i in {1..5}; do
+            if curl -f -m 10 http://${{ secrets.CANARY_HOST }}/health; then
+              echo "✅ Canary stable (tentative $i)"
+              break
+            else
+              echo "⏳ Canary pas encore stable (tentative $i/5)"
+              if [ $i -eq 5 ]; then
+                echo "❌ Canary non stable après 5 tentatives"
+                exit 1
+              fi
+              sleep 15
+            fi
+          done
+
+      - name: 🛡️ ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: 'http://${{ secrets.CANARY_HOST }}'
+          fail_action: true
+          artifact_name: 'zap_baseline_scan'
+          issue_title: 'ZAP Baseline Security Report - Release Validation'
+
+      - name: 🛡️ ZAP API Security Test
+        run: |
+          echo "🔍 Tests sécurité spécifiques API..."
+          
+          # Test endpoint API via proxy
+          API_RESPONSE=$(curl -s -w "%{http_code}" http://${{ secrets.CANARY_HOST }}/api/health -o /dev/null)
+          if [ "$API_RESPONSE" = "200" ]; then
+            echo "✅ API endpoint accessible via proxy"
+          else
+            echo "❌ API endpoint non accessible via proxy (code: $API_RESPONSE)"
+            exit 1
+          fi
+          
+          # Vérifier que l'API directe n'est toujours PAS accessible
+          if curl -f -m 5 http://${{ secrets.CANARY_HOST }}:3000/ 2>/dev/null; then
+            echo "❌ CRITIQUE: API accessible directement - Faille sécurité majeure!"
+            exit 1
+          else
+            echo "✅ SÉCURITÉ: API non accessible directement"
+          fi
+
+      - name: 🔒 Advanced Security Validation
+        run: |
+          echo "🔒 Validation sécurité avancée..."
+          
+          # Test headers de sécurité
+          SECURITY_HEADERS=$(curl -s -I http://${{ secrets.CANARY_HOST }}/)
+          
+          # Vérifier CSP
+          if echo "$SECURITY_HEADERS" | grep -i "content-security-policy"; then
+            echo "✅ Content Security Policy présent"
+          else
+            echo "❌ Content Security Policy manquant"
+            exit 1
+          fi
+          
+          # Vérifier X-Frame-Options
+          if echo "$SECURITY_HEADERS" | grep -i "x-frame-options"; then
+            echo "✅ X-Frame-Options présent"
+          else
+            echo "❌ X-Frame-Options manquant"
+            exit 1
+          fi
+          
+          # Vérifier X-Content-Type-Options
+          if echo "$SECURITY_HEADERS" | grep -i "x-content-type-options"; then
+            echo "✅ X-Content-Type-Options présent"
+          else
+            echo "❌ X-Content-Type-Options manquant"
+            exit 1
+          fi
+
+      - name: 🎯 Application Security Tests
+        run: |
+          echo "🧪 Tests sécurité applicatifs..."
+          
+          # Test route /admin bloquée
+          ADMIN_RESPONSE=$(curl -s -w "%{http_code}" http://${{ secrets.CANARY_HOST }}/admin -o /dev/null)
+          if [ "$ADMIN_RESPONSE" = "403" ]; then
+            echo "✅ Route /admin correctement bloquée"
+          else
+            echo "❌ Route /admin non bloquée (code: $ADMIN_RESPONSE)"
+            exit 1
+          fi
+          
+          # Test robots.txt
+          ROBOTS_RESPONSE=$(curl -s -w "%{http_code}" http://${{ secrets.CANARY_HOST }}/robots.txt -o /dev/null)
+          if [ "$ROBOTS_RESPONSE" = "200" ]; then
+            echo "✅ robots.txt accessible"
+          else
+            echo "⚠️  robots.txt non accessible (code: $ROBOTS_RESPONSE)"
+          fi
+
+      - name: 🛡️ ZAP Full Scan (Si baseline OK)
+        uses: zaproxy/action-full-scan@v0.9.0
+        continue-on-error: true
+        with:
+          target: 'http://${{ secrets.CANARY_HOST }}'
+          fail_action: false
+          artifact_name: 'zap_full_scan'
+          issue_title: 'ZAP Full Security Report - Release Validation'
+
+  Security_Summary:
+    name: 📋 Security Validation Summary
+    needs: [ZAP_Security_Scan]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: 📊 Résumé Validation Sécurité
+        run: |
+          echo "🛡️ VALIDATION SÉCURITÉ CANARY - Résumé:"
+          echo "  🔍 ZAP Security Scan: ${{ needs.ZAP_Security_Scan.result }}"
+          
+          if [[ "${{ needs.ZAP_Security_Scan.result }}" == "success" ]]; then
+            echo ""
+            echo "✅ VALIDATION SÉCURITÉ RÉUSSIE!"
+            echo "🛡️ Environnement canary sécurisé et validé"
+            echo "🚀 PRÊT POUR DÉPLOIEMENT PRODUCTION"
+            echo ""
+            echo "📋 Actions suivantes:"
+            echo "  1. Merger cette release vers main"
+            echo "  2. Déclencher déploiement production"
+            echo "  3. Monitorer déploiement prod"
+          else
+            echo ""
+            echo "❌ VALIDATION SÉCURITÉ ÉCHOUÉE"
+            echo "🚨 DÉPLOIEMENT PRODUCTION BLOQUÉ"
+            echo ""
+            echo "🔧 Actions requises:"
+            echo "  1. Analyser les rapports ZAP"
+            echo "  2. Corriger les vulnérabilités"
+            echo "  3. Créer nouvelle PR develop → release"
+            echo "  4. Re-tester avant production"
+            exit 1
+          fi
+
+      - name: 🔔 Notification Status
+        run: |
+          echo "📢 Notification: Validation sécurité terminée"
+          echo "🎯 Statut: ${{ needs.ZAP_Security_Scan.result }}"
+          echo "📅 Date: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          # Ici vous pourriez ajouter des notifications Slack/Discord/Email

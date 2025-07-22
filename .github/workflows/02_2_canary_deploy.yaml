@@ -1,5 +1,4 @@
-
-name: 02_2_Canary Deploy & Test
+name: 02_2_Canary Deploy
 
 on:
   pull_request:
@@ -13,25 +12,55 @@ jobs:
     name: 🚀 Deploy to Canary
     runs-on: ubuntu-latest
     environment: canary
+    outputs:
+      api_image: ${{ steps.image_info.outputs.api_image }}
+      frontend_image: ${{ steps.image_info.outputs.frontend_image }}
+      deployed_sha: ${{ steps.image_info.outputs.deployed_sha }}
 
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
 
-      - name: 📝 Downcase Image Name
-        run: echo "IMAGE_NAME_LOWER=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
+      - name: 📝 Get PR info
+        run: |
+          echo "IMAGE_NAME_LOWER=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
+          # SHA de la PR = HEAD de develop
+          DEVELOP_SHA=${{ github.event.pull_request.head.sha }}
+          echo "DEVELOP_SHA=${DEVELOP_SHA}" >> ${GITHUB_ENV}
+          echo "🔍 Déploiement canary du SHA: ${DEVELOP_SHA}"
 
-      - name: 📤 Upload Docker Compose
+      - name: 🔐 Vérifier que les images existent
+        run: |
+          echo ${{ secrets.DCKCESIZEN_PAT }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          
+          # Vérifier API image
+          if docker manifest inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-api:canary-${{ env.DEVELOP_SHA }} >/dev/null 2>&1; then
+            echo "✅ Image API trouvée: canary-${{ env.DEVELOP_SHA }}"
+          else
+            echo "❌ Image API manquante: canary-${{ env.DEVELOP_SHA }}"
+            echo "💡 Vérifiez que le build sur develop a bien fonctionné"
+            exit 1
+          fi
+          
+          # Vérifier Frontend image
+          if docker manifest inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-frontend:canary-${{ env.DEVELOP_SHA }} >/dev/null 2>&1; then
+            echo "✅ Image Frontend trouvée: canary-${{ env.DEVELOP_SHA }}"
+          else
+            echo "❌ Image Frontend manquante: canary-${{ env.DEVELOP_SHA }}"
+            exit 1
+          fi
+
+      - name: 📤 Upload configs
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.CANARY_HOST }}
           port: 22
           username: ${{ secrets.CANARY_USERNAME }}
           key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
-          source: "./docker-compose.canary.yml,./api/database/init.sql"
+          source: "./docker-compose.canary.yml,./api/database/init.sql,./frontend/nginx.conf"
           target: "/opt/cesizen/"
 
-      - name: 🚀 Deploy Application
+      - name: 🚀 Deploy Pre-built Images
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.CANARY_HOST }}
@@ -48,9 +77,12 @@ jobs:
             # Login to GitHub Container Registry
             echo ${{ secrets.DCKCESIZEN_PAT }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
-            # Pull latest images
-            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-api:canary
-            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-frontend:canary
+            # Pull les images spécifiques au SHA
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-api:canary-${{ env.DEVELOP_SHA }}
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-frontend:canary-${{ env.DEVELOP_SHA }}
+            
+            # Créer docker-compose avec les bonnes images
+            sed "s/:canary/:canary-${{ env.DEVELOP_SHA }}/g" docker-compose.canary.yml > docker-compose.deploy.yml
             
             # Create environment file
             cat > .env << EOF
@@ -62,55 +94,122 @@ jobs:
             DB_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             PORT=3000
-            VITE_API_URL=http://${{ secrets.CANARY_HOST }}:3000/api
+            VITE_API_URL=/api
+            DEPLOYED_SHA=${{ env.DEVELOP_SHA }}
+            DEPLOYED_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
             EOF
             
-            # Deploy
-            docker compose -f docker-compose.canary.yml down --remove-orphans || true
-            docker compose -f docker-compose.canary.yml up -d
+            # Deploy avec les images pré-buildées
+            docker compose -f docker-compose.deploy.yml down --remove-orphans || true
+            docker compose -f docker-compose.deploy.yml up -d
             
-            # Wait and health check
-            sleep 30
-            curl -f http://localhost:3000/ || exit 1
-            curl -f http://localhost:5173/ || exit 1
-            
-            echo "✅ Canary deployment successful!"
+            echo "✅ Déploiement canary terminé!"
+            echo "📦 Images: canary-${{ env.DEVELOP_SHA }}"
 
-  ZAP_Security_Scan:
-      name: 🛡️ ZAP Security Test
-      needs: [Deploy_Canary]
-      runs-on: ubuntu-latest
+      - name: 📝 Export Image Info
+        id: image_info
+        run: |
+          echo "api_image=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-api:canary-${{ env.DEVELOP_SHA }}" >> $GITHUB_OUTPUT
+          echo "frontend_image=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-frontend:canary-${{ env.DEVELOP_SHA }}" >> $GITHUB_OUTPUT
+          echo "deployed_sha=${{ env.DEVELOP_SHA }}" >> $GITHUB_OUTPUT
 
-      steps:
-        - name: 📥 Checkout
-          uses: actions/checkout@v4
+  Infrastructure_Validation:
+    name: 🔧 Validate Canary Infrastructure
+    needs: [Deploy_Canary]
+    runs-on: ubuntu-latest
 
-        # ✅ Tester HTTPS
-        - name: 🛡️ ZAP Scan HTTPS Frontend + API via proxy
-          uses: zaproxy/action-baseline@v0.14.0
-          with:
-            target: 'https://${{ secrets.CANARY_HOST }}'  # HTTPS
-            fail_action: true
-            artifact_name: 'zap_scan_full'
-            issue_title: 'Zap Full Stack Scan Report'
+    steps:
+      - name: ⏳ Wait for services
+        run: |
+          echo "⏳ Attente démarrage des services..."
+          sleep 45
 
-        # ✅ Test que l'API n'est PAS accessible directement
-        - name: 🔒 Vérifier que API n'est pas publique
-          run: |
-            if curl -f -m 5 http://${{ secrets.CANARY_HOST }}:3000/ 2>/dev/null; then
-              echo "❌ ERREUR: API est accessible publiquement!"
-              exit 1
-            else
-              echo "✅ OK: API n'est pas accessible publiquement"
-            fi
-            
-        # ✅ Vérifier redirection HTTP → HTTPS
-        - name: 🔒 Vérifier redirection HTTPS
-          run: |
-            RESPONSE=$(curl -s -I -L http://${{ secrets.CANARY_HOST }})
-            if echo "$RESPONSE" | grep -q "301"; then
-              echo "✅ OK: Redirection HTTP → HTTPS fonctionne"
-            else
-              echo "❌ ERREUR: Pas de redirection HTTPS"
-              exit 1
-            fi
+      - name: 🏥 Health Check
+        run: |
+          echo "🏥 Vérification health check..."
+          if curl -f -m 10 http://${{ secrets.CANARY_HOST }}/health; then
+            echo "✅ Health check OK"
+          else
+            echo "❌ Health check échoué"
+            exit 1
+          fi
+
+      - name: 🔒 Validate Security Infrastructure
+        run: |
+          echo "🔍 Validation infrastructure sécurisée..."
+          
+          # API non accessible directement
+          if curl -f -m 5 http://${{ secrets.CANARY_HOST }}:3000/ 2>/dev/null; then
+            echo "❌ ERREUR: API accessible publiquement sur port 3000!"
+            exit 1
+          else
+            echo "✅ OK: API non accessible publiquement"
+          fi
+          
+          # BDD non accessible directement
+          if nc -z -v -w5 ${{ secrets.CANARY_HOST }} 3306 2>/dev/null; then
+            echo "❌ ERREUR: Base de données accessible publiquement!"
+            exit 1
+          else
+            echo "✅ OK: Base de données non accessible publiquement"
+          fi
+
+      - name: 🎯 Validate Application Functions
+        run: |
+          echo "🧪 Tests fonctionnels de base..."
+          
+          # Frontend accessible
+          if curl -f -m 10 http://${{ secrets.CANARY_HOST }}/; then
+            echo "✅ Frontend accessible"
+          else
+            echo "❌ Frontend non accessible"
+            exit 1
+          fi
+          
+          # API accessible via proxy
+          if curl -f -m 10 http://${{ secrets.CANARY_HOST }}/api/health 2>/dev/null; then
+            echo "✅ API accessible via proxy nginx"
+          else
+            echo "❌ API non accessible via proxy"
+            exit 1
+          fi
+          
+          # Headers sécurité présents
+          HEADERS=$(curl -s -I http://${{ secrets.CANARY_HOST }}/)
+          if echo "$HEADERS" | grep -q "X-Frame-Options"; then
+            echo "✅ Headers de sécurité présents"
+          else
+            echo "❌ Headers de sécurité manquants"
+            exit 1
+          fi
+
+  Deploy_Summary:
+    name: 📋 Deployment Summary
+    needs: [Deploy_Canary, Infrastructure_Validation]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: 📊 Résumé Déploiement Canary
+        run: |
+          echo "🎯 DÉPLOIEMENT CANARY - Résumé:"
+          echo "  📦 Déploiement: ${{ needs.Deploy_Canary.result }}"
+          echo "  🔧 Validation Infra: ${{ needs.Infrastructure_Validation.result }}"
+          echo ""
+          echo "📋 Images déployées:"
+          echo "  🔗 API: ${{ needs.Deploy_Canary.outputs.api_image }}"
+          echo "  🎨 Frontend: ${{ needs.Deploy_Canary.outputs.frontend_image }}"
+          echo "  📌 SHA: ${{ needs.Deploy_Canary.outputs.deployed_sha }}"
+          
+          if [[ "${{ needs.Deploy_Canary.result }}" == "success" && 
+                "${{ needs.Infrastructure_Validation.result }}" == "success" ]]; then
+            echo ""
+            echo "✅ DÉPLOIEMENT CANARY RÉUSSI!"
+            echo "🚀 Environnement canary opérationnel"
+            echo "🔍 Prêt pour merge et scan sécurité complet"
+          else
+            echo ""
+            echo "❌ DÉPLOIEMENT CANARY ÉCHOUÉ"
+            echo "🔧 Corriger les problèmes avant de merger"
+            exit 1
+          fi
