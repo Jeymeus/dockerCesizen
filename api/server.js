@@ -12,17 +12,17 @@ import menuRoutes from './routes/menuRoutes.js'
 import pageRoutes from './routes/pageRoutes.js'
 
 // 🔒 Import du middleware de sécurité
-import { securityHeaders, handleRobotsSitemap, securedCors } from './middlewares/securityMiddleware.js'
+// import { securityHeaders, handleRobotsSitemap, securedCors } from './middlewares/securityMiddleware.js'
 
 const app = express()
 
 // 🔒 Sécurité - Masquer Express
-app.disable('x-powered-by')
+// app.disable('x-powered-by')
 
 // 🔒 Middlewares de sécurité
-app.use(securityHeaders)
-app.use(handleRobotsSitemap)
-app.use(securedCors)
+// app.use(securityHeaders)
+// app.use(handleRobotsSitemap)
+// app.use(securedCors)
 
 // 🛡️ Autres middlewares globaux
 app.use(express.json({ limit: '10mb' }))
