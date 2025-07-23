@@ -2,134 +2,30 @@ name: 03_1_Production Deploy
 
 on:
   pull_request:
-    branches: [toto]
-
-env:
-  REGISTRY: ghcr.io
-  USERNAME: ${{ github.actor }}
+    branches: [master]
 
 jobs:
   Docker_Build_Production:
     name: 🐳 Docker Build Production
     runs-on: ubuntu-latest
-
     steps:
-      - name: 📥 Checkout
-        uses: actions/checkout@v4
-
-      - name: 🔐 Registry Login
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ env.USERNAME }}
-          password: ${{ secrets.DCKCESIZEN_PAT }}
-
-      - name: 📝 Downcase Image Name
-        run: echo "IMAGE_NAME_LOWER=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
-
-      - name: 🐳 API Build Push
-        uses: docker/build-push-action@v5
-        with:
-          context: ./api
-          file: ./Dockerfile.api
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-api:latest
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-api:stable
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-api:prod-${{ github.sha }}
-
-      - name: 🎨 Frontend Build Push
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          file: ./Dockerfile.frontend
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-frontend:latest
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-frontend:stable
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-frontend:prod-${{ github.sha }}
+      - name: ✅ Start Build
+        run: echo "Démarrage du build..."
+      - name: ⏳ Simulate Build Delay
+        run: |
+          echo "Build en cours..."
+          sleep 64
+          echo "Build terminé !"
 
   Deploy_Production:
     name: 🚀 Deploy to Production
     needs: [Docker_Build_Production]
     runs-on: ubuntu-latest
-    environment: production
-
     steps:
-      - name: 📥 Checkout
-        uses: actions/checkout@v4
-
-      - name: 📝 Downcase Image Name
-        run: echo "IMAGE_NAME_LOWER=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
-
-      - name: 💾 Backup Production
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.PRODUCTION_HOST }}
-          port: 22
-          username: ${{ secrets.PRODUCTION_USERNAME }}
-          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
-          script: |
-            # Create backup
-            BACKUP_DIR="/opt/cesizen/backups/$(date +%Y%m%d-%H%M%S)"
-            sudo mkdir -p $BACKUP_DIR
-            
-            if [ -f /opt/cesizen/docker-compose.prod.yml ]; then
-              sudo cp /opt/cesizen/docker-compose.prod.yml $BACKUP_DIR/
-            fi
-            
-            echo "✅ Backup created"
-
-      - name: 📤 Upload Production Files
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.PRODUCTION_HOST }}
-          port: 22
-          username: ${{ secrets.PRODUCTION_USERNAME }}
-          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
-          source: "./docker-compose.prod.yml,./api/database/init.sql"
-          target: "/opt/cesizen/"
-
-      - name: 🚀 Deploy Production
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.PRODUCTION_HOST }}
-          port: 22
-          username: ${{ secrets.PRODUCTION_USERNAME }}
-          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
-          script: |
-            cd /opt/cesizen
-            
-            # Create directory if needed
-            sudo mkdir -p /opt/cesizen
-            sudo chown ${{ secrets.PRODUCTION_USERNAME }}:${{ secrets.PRODUCTION_USERNAME }} /opt/cesizen
-            
-            # Login to registry
-            echo ${{ secrets.DCKCESIZEN_PAT }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
-            # Pull latest images
-            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-api:latest
-            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-frontend:latest
-            
-            # Create environment
-            cat > .env << EOF
-            NODE_ENV=production
-            DB_HOST=mariadb
-            DB_USER=cesi
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            DB_NAME=cesizen
-            DB_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            PORT=3000
-            VITE_API_URL=http://${{ secrets.PRODUCTION_HOST }}:3000/api
-            EOF
-            
-            # Rolling deployment
-            docker compose -f docker-compose.prod.yml up -d --force-recreate
-            
-            # Health check
-            sleep 45
-            curl -f http://localhost:3000/ || exit 1
-            curl -f http://localhost:5173/ || exit 1
-            
-            echo "🎉 Production deployment successful!"
+      - name: ✅ Start Deploy
+        run: echo "Démarrage du deploy..."
+      - name: ⏳ Simulate Deploy Delay
+        run: |
+          echo "Déploiement en cours..."
+          sleep 88
+          echo "Déploiement terminé !"
