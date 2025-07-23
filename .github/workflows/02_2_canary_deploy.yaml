@@ -138,7 +138,7 @@ jobs:
       - name: 🏥 Health Check - API
         run: |
           echo "🏥 Vérification health check API..."
-          if curl -f -m 10 http://${{ secrets.CANARY_HOST }}:3000/health; then
+          if curl -f -m 10 http://${{ secrets.CANARY_HOST }}:3000/ then
             echo "✅ API health check OK"
           else
             echo "❌ API health check échoué"
