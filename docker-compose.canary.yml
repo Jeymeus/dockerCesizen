@@ -9,11 +9,9 @@ services:
       MARIADB_DATABASE: ${DB_NAME:-cesizen}
       MARIADB_USER: ${DB_USER:-cesi}
       MARIADB_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "3306:3306"
     volumes:
       - mariadb_data:/var/lib/mysql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./api/database/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - cesizen-network
     healthcheck:
@@ -58,15 +56,15 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: ${NODE_ENV:-production}
-      VITE_API_URL: ${VITE_API_URL}
+      VITE_API_URL: http://${CANARY_HOST:-localhost}:3000/api
     ports:
-      - "5173:5173"
+      - "80:80"
     depends_on:
       - api
     networks:
       - cesizen-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5173/"]
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
       interval: 30s
       timeout: 10s
       retries: 3

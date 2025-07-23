@@ -1,0 +1,171 @@
+name: 02_3_Canary Security Scan
+
+on:
+  push:
+    branches: [release]
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  ZAP_Security_Scan:
+    name: 🛡️ ZAP Security Validation
+    runs-on: ubuntu-latest
+    environment: canary
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: ⏳ Wait for Canary Stability
+        run: |
+          echo "⏳ Attente stabilisation environnement canary..."
+          sleep 60
+          
+          # Vérifier que le canary répond
+          for i in {1..5}; do
+            if curl -f -m 10 http://${{ secrets.CANARY_HOST }}/; then
+              echo "✅ Frontend stable (tentative $i)"
+              break
+            else
+              echo "⏳ Frontend pas encore stable (tentative $i/5)"
+              if [ $i -eq 5 ]; then
+                echo "❌ Frontend non stable après 5 tentatives"
+                exit 1
+              fi
+              sleep 15
+            fi
+          done
+          
+          # Vérifier que l'API répond
+          for i in {1..5}; do
+            if curl -f -m 10 http://${{ secrets.CANARY_HOST }}:3000/health; then
+              echo "✅ API stable (tentative $i)"
+              break
+            else
+              echo "⏳ API pas encore stable (tentative $i/5)"
+              if [ $i -eq 5 ]; then
+                echo "❌ API non stable après 5 tentatives"
+                exit 1
+              fi
+              sleep 15
+            fi
+          done
+
+      - name: 🛡️ ZAP Baseline Scan - Frontend
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: 'http://${{ secrets.CANARY_HOST }}'
+          fail_action: true
+          artifact_name: 'zap_baseline_frontend'
+          issue_title: 'ZAP Frontend Security Report - Release Validation'
+
+      - name: 🛡️ ZAP Baseline Scan - API
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: 'http://${{ secrets.CANARY_HOST }}:3000'
+          fail_action: true
+          artifact_name: 'zap_baseline_api'
+          issue_title: 'ZAP API Security Report - Release Validation'
+
+      - name: 🛡️ API Security Tests
+        run: |
+          echo "🔍 Tests sécurité API..."
+          
+          # Test endpoint API health
+          API_RESPONSE=$(curl -s -w "%{http_code}" http://${{ secrets.CANARY_HOST }}:3000/health -o /dev/null)
+          if [ "$API_RESPONSE" = "200" ]; then
+            echo "✅ API health endpoint accessible"
+          else
+            echo "❌ API health endpoint non accessible (code: $API_RESPONSE)"
+            exit 1
+          fi
+          
+          # Test que la base de données n'est pas accessible
+          if nc -z -v -w5 ${{ secrets.CANARY_HOST }} 3306 2>/dev/null; then
+            echo "❌ CRITIQUE: Base de données accessible directement!"
+            exit 1
+          else
+            echo "✅ SÉCURITÉ: Base de données non accessible directement"
+          fi
+
+      - name: 🔒 Basic Security Validation
+        run: |
+          echo "🔒 Validation sécurité de base..."
+          
+          # Test headers de sécurité frontend
+          FRONTEND_HEADERS=$(curl -s -I http://${{ secrets.CANARY_HOST }}/)
+          echo "Headers frontend reçus:"
+          echo "$FRONTEND_HEADERS"
+          
+          # Test headers de sécurité API
+          API_HEADERS=$(curl -s -I http://${{ secrets.CANARY_HOST }}:3000/health)
+          echo "Headers API reçus:"
+          echo "$API_HEADERS"
+
+      - name: 🎯 Application Security Tests
+        run: |
+          echo "🧪 Tests sécurité applicatifs..."
+          
+          # Test que les endpoints sensibles ne sont pas exposés
+          SENSITIVE_ENDPOINTS=("/admin" "/config" "/debug" "/.env")
+          
+          for endpoint in "${SENSITIVE_ENDPOINTS[@]}"; do
+            RESPONSE=$(curl -s -w "%{http_code}" http://${{ secrets.CANARY_HOST }}${endpoint} -o /dev/null)
+            if [ "$RESPONSE" = "404" ] || [ "$RESPONSE" = "403" ]; then
+              echo "✅ Endpoint ${endpoint} correctement protégé (${RESPONSE})"
+            else
+              echo "⚠️  Endpoint ${endpoint} répond avec code: ${RESPONSE}"
+            fi
+          done
+
+      - name: 🛡️ ZAP Full Scan (Si baseline OK)
+        uses: zaproxy/action-full-scan@v0.9.0
+        continue-on-error: true
+        with:
+          target: 'http://${{ secrets.CANARY_HOST }}'
+          fail_action: false
+          artifact_name: 'zap_full_scan'
+          issue_title: 'ZAP Full Security Report - Release Validation'
+
+  Security_Summary:
+    name: 📋 Security Validation Summary
+    needs: [ZAP_Security_Scan]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: 📊 Résumé Validation Sécurité
+        run: |
+          echo "🛡️ VALIDATION SÉCURITÉ CANARY - Résumé:"
+          echo "  🔍 ZAP Security Scan: ${{ needs.ZAP_Security_Scan.result }}"
+          
+          if [[ "${{ needs.ZAP_Security_Scan.result }}" == "success" ]]; then
+            echo ""
+            echo "✅ VALIDATION SÉCURITÉ RÉUSSIE!"
+            echo "🛡️ Environnement canary sécurisé et validé"
+            echo "🚀 PRÊT POUR DÉPLOIEMENT PRODUCTION"
+            echo ""
+            echo "📋 Actions suivantes:"
+            echo "  1. Merger cette release vers main"
+            echo "  2. Déclencher déploiement production"
+            echo "  3. Monitorer déploiement prod"
+          else
+            echo ""
+            echo "❌ VALIDATION SÉCURITÉ ÉCHOUÉE"
+            echo "🚨 DÉPLOIEMENT PRODUCTION BLOQUÉ"
+            echo ""
+            echo "🔧 Actions requises:"
+            echo "  1. Analyser les rapports ZAP"
+            echo "  2. Corriger les vulnérabilités"
+            echo "  3. Créer nouvelle PR develop → release"
+            echo "  4. Re-tester avant production"
+            exit 1
+          fi
+
+      - name: 🔔 Notification Status
+        run: |
+          echo "📢 Notification: Validation sécurité terminée"
+          echo "🎯 Statut: ${{ needs.ZAP_Security_Scan.result }}"
+          echo "📅 Date: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          # Ici vous pourriez ajouter des notifications Slack/Discord/Email

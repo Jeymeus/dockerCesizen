@@ -33,7 +33,9 @@ jobs:
           context: ./api
           file: ./api/Dockerfile.api
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-api:canary
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-api:canary
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-api:canary-${{ github.sha }}
 
       - name: 🎨 Frontend Build Push
         uses: docker/build-push-action@v5
@@ -41,7 +43,9 @@ jobs:
           context: ./frontend
           file: ./frontend/Dockerfile.frontend
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-frontend:canary
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-frontend:canary
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-frontend:canary-${{ github.sha }}
 
   Container_Scan:
     name: 🔍 Container Security Scan
