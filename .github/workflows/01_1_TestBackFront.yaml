@@ -65,7 +65,9 @@ jobs:
           echo "DB_USER=cesi" >> .env.test
           echo "DB_PASSWORD=cesipass" >> .env.test
           echo "DB_NAME=cesizen_test" >> .env.test
-          
+          echo "JWT_SECRET=test_jwt_secret_for_github_actions_only" >> .env.test
+          echo "JWT_EXPIRATION=1h" >> .env.test
+
       - name: 🧪 Run integration tests
         working-directory: ./api
         env:
@@ -87,6 +89,7 @@ jobs:
           DB_USER: cesi
           DB_PASSWORD: cesipass
           DB_NAME: cesizen_test
+          JWT_SECRET: test_jwt_secret_for_github_actions_only
         run: npm run test:coverage
         
       - name: 📤 Upload coverage reports
@@ -160,6 +163,8 @@ jobs:
           echo "DB_PASSWORD=cesipass" >> .env
           echo "DB_NAME=cesizen_test" >> .env
           echo "PORT=3000" >> .env
+          echo "JWT_SECRET=test_jwt_secret_for_e2e_github_actions" >> .env
+          echo "JWT_EXPIRATION=1h" >> .env
           
       - name: 🚀 Start API server
         working-directory: ./api
@@ -171,6 +176,7 @@ jobs:
           DB_PASSWORD: cesipass
           DB_NAME: cesizen_test
           PORT: 3000
+          JWT_SECRET: test_jwt_secret_for_e2e_github_actions
         run: |
           npm start &
           sleep 10
